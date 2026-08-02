@@ -4,6 +4,11 @@ import { App } from './App.js';
 import { installApi } from './api.js';
 import './styles.css';
 
+// The About dialog's data file ships a version baked at sync time; this is the
+// one the build actually produced. Spread, not assign: about-data.js may not
+// have run yet, and it merges rather than overwriting. See public/about.js.
+window.STOATWORKS_ABOUT = { ...window.STOATWORKS_ABOUT, version: __APP_VERSION__ };
+
 /**
  * Choose the backend before the app mounts.
  *

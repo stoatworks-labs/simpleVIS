@@ -100,9 +100,10 @@
   align-items: center;
   justify-content: center;
   padding: 24px;
-  background: rgba(4, 10, 17, 0.62);
-  -webkit-backdrop-filter: blur(3px);
-  backdrop-filter: blur(3px);
+  /* No backdrop-filter. It buys very little over a scrim this dark, and it is
+     the one property in here that is genuinely patchy across the webviews this
+     ships into — WebKitGTK on Linux under Tauri especially. */
+  background: rgba(4, 10, 17, 0.66);
   box-sizing: border-box;
   font: 14px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   color: #e8eef5;
@@ -129,24 +130,26 @@
   text-align: left;
 }
 
-/* The mark sits UNDER everything, bled off the bottom-right corner so the
-   stoat reads as a watermark rather than as a second logo competing with the
-   product name. contain + right-bottom keeps it whole at every card height. */
+/* The mark sits UNDER the whole card, centred and large: the dialog is meant to
+   sit over the Stoatworks Labs logo, not next to a small copy of it. Kept faint
+   enough that the link rows crossing it stay easy to read. */
 .mark {
   position: absolute;
-  right: -34px;
-  bottom: -26px;
-  width: 300px;
-  height: 232px;
-  background: center / contain no-repeat;
-  opacity: 0.085;
+  inset: 0;
+  background: center / 78% no-repeat;
+  opacity: 0.07;
   pointer-events: none;
+  z-index: 0;
 }
 
-.card > *:not(.mark) { position: relative; }
+/* Lifts the content off the mark. The close button is excluded because it is
+   already absolutely positioned and this would reset it to relative — which
+   silently parks it inline, next to the title, instead of in the corner. */
+.card > *:not(.mark):not(.close) { position: relative; z-index: 1; }
 
 .close {
   position: absolute;
+  z-index: 2;
   top: 10px;
   right: 10px;
   width: 30px;
@@ -276,7 +279,6 @@
 @media (max-width: 480px) {
   .scrim { padding: 12px; align-items: flex-start; }
   .card { padding: 22px 18px 18px; }
-  .mark { width: 220px; height: 170px; right: -26px; }
   .links .where { display: none; }
 }
 `;

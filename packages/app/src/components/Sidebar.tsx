@@ -97,6 +97,12 @@ export function Sidebar(props: Props) {
           <h1>simpleVIS</h1>
           <p>lighting visualiser</p>
         </div>
+        {/* Opens the shared About dialog — see public/about.js, which delegates
+            this attribute from the document, so nothing needs importing here.
+            One dialog for both builds: the Tauri window is a webview too. */}
+        <button className="brand__about" type="button" data-stoatworks-about>
+          About
+        </button>
       </header>
 
       <section className="panel">
