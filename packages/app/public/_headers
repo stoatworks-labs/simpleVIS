@@ -1,0 +1,8 @@
+# WebGL and large ArrayBuffer work needs no special headers, but the hashed
+# asset filenames Vite emits are safe to cache forever.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin

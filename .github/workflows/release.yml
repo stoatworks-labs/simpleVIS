@@ -25,6 +25,14 @@ jobs:
             libayatana-appindicator3-dev librsvg2-dev
       - run: npm ci
       - run: npm run typecheck --workspaces --if-present
+
+      # NOTE: the TypeScript suites that read MA's Demostage_MVR.mvr **skip**
+      # here — the file is MA Lighting's content and is not committed, so a
+      # green run on CI covers roughly a third of them. They are the ones that
+      # matter most, and they run locally where grandMA3 is installed. CI's real
+      # value is the Rust side below, which needs no fixture, plus typecheck and
+      # cross-platform builds. Do not read "tests passed" here as "everything
+      # passed".
       - run: npm test --workspaces --if-present
       - name: Rust tests
         working-directory: src-tauri
