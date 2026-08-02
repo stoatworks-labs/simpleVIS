@@ -125,11 +125,24 @@ export function App() {
 
   /* --------------------------------------------------------------- import */
 
-  const importMvr = useCallback(async (file: File) => {
+  /**
+   * Load the example rig that ships with the app.
+   *
+   * Authored by this project (`scripts/make-example-rig.py`) rather than taken
+   * from a vendor library, so it is safe to publish, to film, and to run in CI.
+   * It goes through exactly the same import path as a dropped file.
+   */
+  const loadExample = useCallback(async () => {
+    const response = await fetch('example-rig.mvr');
+    const bytes = await response.arrayBuffer();
+    await importMvrBytes(new Uint8Array(bytes), 'example-rig.mvr');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const importMvrBytes = useCallback(async (bytes: Uint8Array, name: string) => {
     setError(null);
-    setBusy(`Reading ${file.name}…`);
+    setBusy(`Reading ${name}…`);
     try {
-      const bytes = new Uint8Array(await file.arrayBuffer());
       const archive = openMvr(bytes);
       const patch = buildPatch(archive);
 
@@ -144,13 +157,18 @@ export function App() {
       // The backend can only join sACN multicast groups it knows about.
       void api.setUniverses(patch.universes);
 
-      setLoad({ patch, name: file.name, setObjects: set.loaded });
+      setLoad({ patch, name, setObjects: set.loaded });
     } catch (err) {
       setError((err as Error).message);
     } finally {
       setBusy(null);
     }
   }, [api]);
+
+  const importMvr = useCallback(
+    async (file: File) => importMvrBytes(new Uint8Array(await file.arrayBuffer()), file.name),
+    [importMvrBytes],
+  );
 
   return (
     <div className="app">
@@ -166,10 +184,11 @@ export function App() {
         onExposureChange={setExposure}
         onFrameRig={() => viewerRef.current?.frameRig()}
         onImport={importMvr}
+        onLoadExample={loadExample}
       />
       <main className="viewport">
         <canvas ref={canvasRef} />
-        {!load && <DropZone onFile={importMvr} busy={busy} />}
+        {!load && <DropZone onFile={importMvr} onLoadExample={loadExample} busy={busy} />}
         {busy && load && <div className="toast">{busy}</div>}
         {error && (
           <div className="toast toast--error" onClick={() => setError(null)}>

@@ -14,6 +14,7 @@ interface Props {
   onExposureChange: (value: number) => void;
   onFrameRig: () => void;
   onImport: (file: File) => void;
+  onLoadExample: () => void;
 }
 
 export function Sidebar(props: Props) {
@@ -91,6 +92,9 @@ export function Sidebar(props: Props) {
             e.target.value = '';
           }}
         />
+        {!load && (
+          <button className="button" onClick={props.onLoadExample}>Load example rig</button>
+        )}
         {load && (
           <>
             <dl className="stats">
