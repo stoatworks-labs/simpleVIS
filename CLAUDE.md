@@ -10,8 +10,10 @@ npm test --workspaces
 ```
 
 The core tests run against **MA Lighting's `Demostage_MVR.mvr`**, which is not
-committed. They are found automatically inside an installed grandMA3
-(`~/MALightingTechnology/<version>/shared/resource/lib_mvr/`). Without it those
+committed. It is found automatically in grandMA3's **resource library**
+(`~/MALightingTechnology/<version>/shared/resource/lib_mvr/`) — the library
+alone is enough; the console application does not have to be installed, and on
+this machine it is not. Without it those
 suites **skip** rather than fail — check the skip message before believing a
 green run means everything passed.
 

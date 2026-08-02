@@ -84,8 +84,8 @@ announces `kind="Visualizer"`, and on connect sends `PNam`, an `SDMX/Capa` and a
 
 Capture is a **Visualizer**, i.e. a DMX *consumer* like simpleVIS, so it sends
 no `ChBk` and no `Ptch`. Verifying SDMX levels and FPTC patch against a real
-peer needs a **console** — grandMA3 is installed here and is the obvious
-candidate.
+peer needs a **console**, and there is not one on this machine — see the
+verified-vs-assumed section.
 
 Content types are matched as **ASCII bytes**, never as `u32` constants:
 reference headers in the wild have at least two byte-reversed (`COOKIE_PINF_PNAM`
@@ -288,8 +288,16 @@ typecheck clean):
 **Not verified — do not describe as working:**
 
 - **No real console has ever driven it.** Every DMX packet so far has come from
-  a test that wrote it. grandMA3 2.2.5 and Capture 2026 are both installed on
-  the development Mac and are the intended test rig.
+  a test that wrote it.
+
+  ⚠️ Earlier revisions of this file said "grandMA3 2.2.5 and Capture 2026 are
+  both installed". **Only Capture is.** What exists at
+  `~/MALightingTechnology/gma3_2.2.5/` is grandMA3's *data and resource* tree —
+  which is where the Demostage MVR comes from — with **no application**. A
+  console was inferred from a directory. Capture identifies as a `Visualizer`,
+  i.e. a DMX consumer like simpleVIS, so **nothing on this machine can act as a
+  DMX source**: verifying SDMX levels or FPTC patch against a real desk needs
+  hardware or software that is not here.
 - **No DMX interface has ever been connected.** The Enttec DMX USB Pro path is
   written from the protocol document and has never seen a widget — its framing
   is unit-tested, its behaviour is not.

@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v0.2.0 — 2026-08-02
 
 ### CITP
 - **PINF** peer discovery: announces simpleVIS on 224.0.0.180:4809 and dials
@@ -12,9 +12,20 @@
   other. Blind data is dropped, and `SXSr` (Set External Source) is honoured.
 - **FPTC** fixture patch: `Ptch`, `UPtc` and an `SPtc` request on connect.
 
-Verified over real sockets against a scripted console — discovery, TCP framing,
-partial-block assembly, blind rejection, and several messages arriving in one
-segment. **Not yet tested against a real console or Capture.**
+### Verified
+- Against **Capture 2026** over the wire: `PLoc` parsed off the multicast group,
+  TCP connect to its advertised port, and consecutive messages framed cleanly.
+  Capture's `SDMX/Capa` is parsed; its `CAEX` content type turns out to be a
+  *number*, not a four-character code, which the unknown-layer path handles
+  without dropping the connection.
+- Against a scripted console over real sockets: discovery, TCP framing,
+  partial-block assembly, blind rejection, and two messages in one segment.
+
+### Not verified
+- **No real console has driven it.** Capture is a `Visualizer` — a DMX consumer
+  like simpleVIS — so it sends neither levels nor patch, and there is no console
+  software on the development machine. SDMX levels and FPTC patch are tested
+  only against a console this project wrote.
 
 ## v0.1.0 — 2026-08-02
 
