@@ -466,6 +466,11 @@ fn handle(
         // dropping it.
         Message::UniverseName { .. } => {}
 
+        // Recorded rather than acted on: the codes' meanings are not verified,
+        // and a peer's declared capabilities change nothing about how its
+        // channel blocks are handled.
+        Message::Capabilities(_) => {}
+
         // We are not a console; a peer asking us for a patch gets silence
         // rather than a wrong answer.
         Message::SendPatch => {}

@@ -71,6 +71,22 @@ Two things about the transport that are easy to get wrong, because both fail as
   block as a whole universe blanks everything outside it, so blocks are
   accumulated per peer before being merged.
 
+**Verified against Capture 2026** (`cargo run --example citp-probe`). It
+announces `kind="Visualizer"`, and on connect sends `PNam`, an `SDMX/Capa` and a
+`CAEX` message. Two findings from that first contact:
+
+- **A content type is not always ASCII.** Capture's CAEX kind is the number
+  `0x00030100`. Rendering it as text gives mojibake; treat it as opaque bytes.
+- **`Capa` is a u16 count then that many u16 codes.** Capture sends
+  `[2, 3, 101, 102, 105]`. What the codes *mean* is not decoded — nothing here
+  has verified it, and guessing at protocol semantics is what produced this
+  project's one published error.
+
+Capture is a **Visualizer**, i.e. a DMX *consumer* like simpleVIS, so it sends
+no `ChBk` and no `Ptch`. Verifying SDMX levels and FPTC patch against a real
+peer needs a **console** — grandMA3 is installed here and is the obvious
+candidate.
+
 Content types are matched as **ASCII bytes**, never as `u32` constants:
 reference headers in the wild have at least two byte-reversed (`COOKIE_PINF_PNAM`
 and `COOKIE_SDMX_ENID` spell theirs big-endian while the rest are little-endian),

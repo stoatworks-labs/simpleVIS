@@ -52,6 +52,7 @@ pub const CHLS: [u8; 4] = *b"ChLs";
 pub const UNAM: [u8; 4] = *b"UNam";
 pub const ENID: [u8; 4] = *b"EnId";
 pub const SXSR: [u8; 4] = *b"SXSr";
+pub const CAPA: [u8; 4] = *b"Capa";
 
 // FPTC message types.
 pub const PTCH: [u8; 4] = *b"Ptch";
@@ -109,7 +110,20 @@ pub enum Message {
     Unpatch(Vec<u16>),
     /// The peer is asking us to send our patch.
     SendPatch,
+    /// What a peer says it can do with DMX.
+    ///
+    /// Observed from Capture 2026 on connect: `05 00 | 02 00 03 00 65 00 66 00
+    /// 69 00` — a u16 count followed by that many u16 codes, here
+    /// `[2, 3, 101, 102, 105]`. The **meaning** of individual codes is not
+    /// decoded, because nothing here has verified it and guessing at protocol
+    /// semantics is what produced this project's one published error. They are
+    /// surfaced as numbers for diagnostics.
+    Capabilities(Vec<u16>),
     /// A well-formed CITP message in a layer this module does not implement.
+    ///
+    /// ⚠️ `kind` is **not always ASCII**. Capture's CAEX messages carry a
+    /// numeric content type (`0x00030100`), so rendering this as text gives
+    /// mojibake. Treat it as four opaque bytes.
     Unhandled { layer: [u8; 4], kind: [u8; 4] },
 }
 
@@ -236,6 +250,19 @@ pub fn parse(buf: &[u8]) -> Result<Message, CitpError> {
         }
 
         (SDMX, SXSR) => Ok(Message::SetExternalSource(read_cstring(buf, &mut pos))),
+
+        (SDMX, CAPA) => {
+            if buf.len() < pos + 2 {
+                return Err(CitpError::Malformed);
+            }
+            let count = le16(&buf[pos..]) as usize;
+            pos += 2;
+            if pos + count * 2 > buf.len() {
+                return Err(CitpError::BadLength);
+            }
+            let codes = (0..count).map(|i| le16(&buf[pos + i * 2..])).collect();
+            Ok(Message::Capabilities(codes))
+        }
 
         (FPTC, PTCH) => {
             // FPTC's header carries an extra ContentHint word before the body.
@@ -439,6 +466,24 @@ mod tests {
             parse(&raw).unwrap(),
             Message::SetExternalSource("ArtNet/1/0/0".into())
         );
+    }
+
+    /// Captured verbatim from Capture 2026 on the wire.
+    #[test]
+    fn parses_captures_real_capabilities_message() {
+        let body = [0x05, 0x00, 0x02, 0x00, 0x03, 0x00, 0x65, 0x00, 0x66, 0x00, 0x69, 0x00];
+        let raw = frame(SDMX, CAPA, &body);
+        assert_eq!(parse(&raw).unwrap(), Message::Capabilities(vec![2, 3, 101, 102, 105]));
+    }
+
+    #[test]
+    fn a_non_ascii_content_type_does_not_break_anything() {
+        // Capture's CAEX messages carry a numeric kind (0x00030100), not a
+        // four-character code. Reported as opaque bytes rather than mangled
+        // into text or rejected.
+        let kind = 0x00030100u32.to_le_bytes();
+        let raw = frame(*b"CAEX", kind, &[]);
+        assert_eq!(parse(&raw).unwrap(), Message::Unhandled { layer: *b"CAEX", kind });
     }
 
     #[test]
