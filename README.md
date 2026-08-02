@@ -53,7 +53,55 @@ often assumed to carry levels and does not: CITP is discovery, *patch* exchange
 and streaming the viewport back to the console. Levels always arrive over
 Art-Net or sACN.
 
+## Video
+
+[![simpleVIS](docs/video-thumb.png)](https://www.youtube.com/watch?v=HgVhKPJmTzE)
+
+A 50-second look at it working, filmed at the hosted address and driven through
+the app's own controls.
+
 <!-- downloads:start -->
+
+## Download
+
+**[v0.1.0](https://github.com/stoatworks-labs/simpleVIS/releases/tag/v0.1.0)** — prebuilt for macOS, Windows and Linux. Pick your platform:
+
+<details>
+<summary><b>macOS</b> — Apple Silicon, Intel</summary>
+
+| Build | Download | Size |
+| --- | --- | --- |
+| Apple Silicon · .dmg disk image | [`simpleVIS_0.1.0_aarch64.dmg`](https://github.com/stoatworks-labs/simpleVIS/releases/download/v0.1.0/simpleVIS_0.1.0_aarch64.dmg) | 2.8 MB |
+| Intel · .dmg disk image | [`simpleVIS_0.1.0_x64.dmg`](https://github.com/stoatworks-labs/simpleVIS/releases/download/v0.1.0/simpleVIS_0.1.0_x64.dmg) | 2.8 MB |
+
+</details>
+
+<details>
+<summary><b>Windows</b> — x64</summary>
+
+| Build | Download | Size |
+| --- | --- | --- |
+| x64 · .exe installer | [`simpleVIS_0.1.0_x64-setup.exe`](https://github.com/stoatworks-labs/simpleVIS/releases/download/v0.1.0/simpleVIS_0.1.0_x64-setup.exe) | 2.0 MB |
+
+</details>
+
+<details>
+<summary><b>Linux</b> — x64</summary>
+
+| Build | Download | Size |
+| --- | --- | --- |
+| x64 · .deb package (Debian/Ubuntu) | [`simpleVIS_0.1.0_amd64.deb`](https://github.com/stoatworks-labs/simpleVIS/releases/download/v0.1.0/simpleVIS_0.1.0_amd64.deb) | 2.5 MB |
+| x64 · .rpm package (Fedora/RHEL) | [`simpleVIS-0.1.0-1.x86_64.rpm`](https://github.com/stoatworks-labs/simpleVIS/releases/download/v0.1.0/simpleVIS-0.1.0-1.x86_64.rpm) | 2.5 MB |
+
+</details>
+
+Also in this release:
+
+- [`simpleVIS_aarch64.app.tar.gz`](https://github.com/stoatworks-labs/simpleVIS/releases/latest/download/simpleVIS_aarch64.app.tar.gz) — Source tarball, 2.5 MB
+- [`simpleVIS_x64.app.tar.gz`](https://github.com/stoatworks-labs/simpleVIS/releases/latest/download/simpleVIS_x64.app.tar.gz) — Source tarball, 2.6 MB
+
+All builds, checksums and release notes: [github.com/stoatworks-labs/simpleVIS/releases](https://github.com/stoatworks-labs/simpleVIS/releases).
+
 <!-- downloads:end -->
 
 ## Development
