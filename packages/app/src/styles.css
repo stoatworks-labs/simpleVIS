@@ -1,0 +1,185 @@
+/* simpleVIS — dark by necessity: this is a tool for looking at light. */
+
+:root {
+  --bg: #0a0a0f;
+  --panel: #12121a;
+  --panel-2: #191922;
+  --line: #262633;
+  --text: #e8e8f0;
+  --muted: #8b8b9c;
+  --accent: #7aa2ff;
+  --warn: #ffb454;
+  --error: #ff6b6b;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font: 13px/1.5 ui-sans-serif, -apple-system, "Segoe UI", Roboto, sans-serif;
+  overflow: hidden;
+}
+
+.app {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  height: 100%;
+}
+
+/* ------------------------------------------------------------- sidebar */
+
+.sidebar {
+  background: var(--panel);
+  border-right: 1px solid var(--line);
+  overflow-y: auto;
+  padding: 0 0 24px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 18px 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.brand__mark {
+  width: 34px; height: 34px;
+  display: grid; place-items: center;
+  border-radius: 9px;
+  background: linear-gradient(140deg, var(--accent), #b98cff);
+  color: #0a0a0f;
+  font-weight: 700; font-size: 19px;
+}
+
+.brand h1 { font-size: 15px; margin: 0; letter-spacing: 0.2px; }
+.brand p  { margin: 0; font-size: 11px; color: var(--muted); }
+
+.panel {
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.panel h2 {
+  margin: 0;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--muted);
+}
+
+.button {
+  appearance: none;
+  border: 1px solid var(--line);
+  background: var(--panel-2);
+  color: var(--text);
+  border-radius: 7px;
+  padding: 8px 12px;
+  font: inherit;
+  cursor: pointer;
+  transition: border-color .15s, background .15s;
+}
+.button:hover { border-color: var(--accent); }
+
+.button--primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #0a0a0f;
+  font-weight: 600;
+}
+.button--primary:hover { filter: brightness(1.1); }
+
+.stats { margin: 0; display: grid; gap: 4px; }
+.stats > div { display: flex; justify-content: space-between; gap: 10px; }
+.stats dt { color: var(--muted); }
+.stats dd {
+  margin: 0; font-variant-numeric: tabular-nums;
+  max-width: 165px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+.typelist { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 3px; }
+.typelist li {
+  display: flex; justify-content: space-between; gap: 8px;
+  font-size: 12px; color: var(--muted);
+}
+.typelist em { font-style: normal; color: var(--text); font-variant-numeric: tabular-nums; }
+
+.field { display: grid; gap: 5px; font-size: 12px; }
+.field > span { display: flex; justify-content: space-between; color: var(--muted); }
+.field em { font-style: normal; color: var(--text); font-variant-numeric: tabular-nums; }
+.field select, .field input[type="range"] { width: 100%; }
+.field select {
+  background: var(--panel-2); color: var(--text);
+  border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; font: inherit;
+}
+
+.check { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.hint { margin: 0; font-size: 11px; color: var(--muted); }
+.hint--muted { opacity: .8; font-style: italic; }
+
+.sources { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 6px; }
+.sources li { display: flex; align-items: center; gap: 7px; font-size: 12px; }
+.sources__label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pill {
+  font-size: 10px; text-transform: uppercase; letter-spacing: .05em;
+  padding: 2px 6px; border-radius: 4px; background: var(--panel-2); color: var(--muted);
+}
+.pill--artnet { color: #7aa2ff; }
+.pill--sacn   { color: #6ee7b7; }
+.pill--usb    { color: #ffb454; }
+.pill--demo   { color: #b98cff; }
+.warn { color: var(--warn); font-size: 11px; }
+
+.warnings { font-size: 11px; color: var(--warn); }
+.warnings ul { margin: 6px 0 0; padding-left: 16px; color: var(--muted); }
+
+/* ------------------------------------------------------------ viewport */
+
+.viewport { position: relative; }
+.viewport canvas { display: block; width: 100%; height: 100%; }
+
+.dropzone {
+  position: absolute; inset: 0;
+  display: grid; place-items: center;
+  background: rgba(10, 10, 15, .72);
+  backdrop-filter: blur(2px);
+}
+.dropzone--over .dropzone__inner { border-color: var(--accent); color: var(--accent); }
+.dropzone__inner {
+  border: 2px dashed var(--line);
+  border-radius: 16px;
+  padding: 44px 60px;
+  text-align: center;
+  color: var(--muted);
+  transition: border-color .15s, color .15s;
+}
+.dropzone__inner h2 { margin: 14px 0 6px; font-size: 17px; color: var(--text); }
+.dropzone__inner p  { margin: 0; font-size: 12px; }
+
+.toast {
+  position: absolute; top: 16px; left: 50%; transform: translateX(-50%);
+  background: var(--panel-2); border: 1px solid var(--line);
+  padding: 8px 14px; border-radius: 8px; font-size: 12px;
+}
+.toast--error { border-color: var(--error); color: var(--error); cursor: pointer; max-width: 60%; }
+
+.statusbar {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  display: flex; gap: 18px; align-items: center;
+  padding: 7px 14px;
+  background: linear-gradient(to top, rgba(10,10,15,.9), transparent);
+  font-size: 11px; color: var(--muted);
+  pointer-events: none;
+}
+.statusbar em { font-style: normal; color: var(--text); font-variant-numeric: tabular-nums; }
+.statusbar__backend { margin-left: auto; }

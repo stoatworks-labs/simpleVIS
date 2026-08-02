@@ -1,0 +1,33 @@
+[package]
+name = "simplevis"
+version = "0.1.0"
+description = "Lightweight real-time lighting visualiser"
+authors = ["Allan Sargeant"]
+license = "MIT"
+repository = "https://github.com/stoatworks-labs/simpleVIS"
+edition = "2021"
+rust-version = "1.77"
+
+[workspace]
+members = ["crates/diag"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+socket2 = { version = "0.5", features = ["all"] }
+if-addrs = "0.13"
+serialport = "4"
+diag = { path = "crates/diag" }
+
+[features]
+# Tauri's own default; keeps `cargo build` honest without the CLI.
+custom-protocol = ["tauri/custom-protocol"]
+
+[profile.release]
+opt-level = "s"
+lto = true
+strip = true

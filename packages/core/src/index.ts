@@ -18,3 +18,4 @@ export * from './mvr/archive.js';
 export * from './dmx/universe.js';
 export * from './dmx/evaluate.js';
 export * from './patch.js';
+export * from './dmx/demo.js';

@@ -158,13 +158,30 @@ function byInstance(channels: readonly PatchedChannel[]): Map<string, PatchedCha
   return map;
 }
 
+/**
+ * Cache of the first beam per fixture type.
+ *
+ * `findBeams` walks the whole geometry tree, and this used to run once per
+ * fixture per frame — 119 tree walks at 60 Hz for the Demostage, all returning
+ * the same seven answers. Keyed on the fixture-type object itself, so a
+ * re-import naturally gets a fresh entry.
+ */
+const beamCache = new WeakMap<object, ReturnType<typeof findBeams>[number]['geometry']['beam']>();
+
+function beamOf(patched: PatchedFixture) {
+  const key = patched.fixtureType as unknown as object;
+  if (!beamCache.has(key)) {
+    beamCache.set(key, findBeams(patched.fixtureType.geometries)[0]?.geometry.beam);
+  }
+  return beamCache.get(key);
+}
+
 /** Evaluate one fixture against the current universe contents. */
 export function evaluateFixture(
   patched: PatchedFixture,
   store: UniverseStore,
 ): FixtureState {
-  const beams = findBeams(patched.fixtureType.geometries);
-  const beam = beams[0]?.geometry.beam;
+  const beam = beamOf(patched);
   const groups = byInstance(patched.channels);
 
   // A fixture can have a main emitter *and* sub-emitters. The Prolights

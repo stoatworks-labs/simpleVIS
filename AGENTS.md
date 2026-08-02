@@ -20,16 +20,20 @@ So simpleVIS ships **two targets from one codebase**:
 
 | Target | What it is | Live input |
 |---|---|---|
-| **Desktop** (Tauri v2) | the real tool | Art-Net, sACN, USB DMX, CITP |
+| **Desktop** (Tauri v2) | the real tool | Art-Net, sACN, USB DMX |
 | **Hosted static** (Cloudflare Worker) | offline previz / plot viewer | none |
 
 Everything above the transport is shared TypeScript. The Rust side owns sockets
 and the serial port and pushes universes into the webview.
 
 Follow the fleet's hosted-build pattern (see `reference_pages_demo_hosting`): a
-`capabilities` object on `window.api` that components branch on, so the hosted
-build **hides** what it cannot do rather than showing buttons that fail. Never
-sniff for Tauri.
+`capabilities` object on the API that components branch on, so the hosted build
+**hides** what it cannot do rather than showing buttons that fail.
+
+**Never sniff for Tauri.** The backend is chosen at *build* time by
+`VITE_SIMPLEVIS_BACKEND=tauri` in `main.tsx`, so the hosted bundle contains no
+Tauri client code at all and nothing at runtime asks which environment it is
+in.
 
 ### CITP is not a level source
 
@@ -40,7 +44,9 @@ where), **MSEX** (media-server thumbnails), **CaSt** (the visualiser streams its
 camera view *back* to the console, which is how a live visualiser feed appears in
 Eos or grandMA3). Levels always arrive over Art-Net or sACN.
 
-simpleVIS targets FPTC and CaSt.
+simpleVIS targets FPTC and CaSt. **Neither is built yet** (v0.2.0); the
+capability reports `false` so the UI hides it rather than offering a dead
+control.
 
 ---
 
@@ -53,11 +59,27 @@ packages/core/     pure TS — no DOM, no WebGL, no Node. Runs in a tab,
   src/matrix.ts    the two incompatible matrix conventions
   src/mvr/         archive + GeneralSceneDescription
   src/gdtf/        description.xml + DMX mode resolution
-  src/dmx/         addressing, universe store, evaluation
+  src/dmx/         addressing, universe store, evaluation, demo source
   src/patch.ts     joins scene placement to channel meaning
-```
 
-`packages/render`, `packages/app` and `src-tauri` are not built yet.
+packages/render/   three.js. Browser-only.
+  src/viewer.ts    the three render passes
+  src/beams.ts     instanced volumetric cones
+  src/glow.ts      instanced billboards for low-flux emitters
+  src/fixtures.ts  GDTF geometry tree -> articulated three.js hierarchy
+
+packages/app/      React UI. One codebase, two backends.
+  src/api.ts       the capabilities contract
+  src/backend-tauri.ts   desktop backend, selected at BUILD time
+
+src-tauri/         Rust. Sockets, serial, nothing lighting-specific.
+  src/protocol/    Art-Net + sACN parsers
+  src/merge.rs     HTP/LTP, priority, source timeout
+  src/net.rs       sockets and the publish loop
+  src/serial.rs    Enttec DMX USB Pro
+  crates/diag/     vendored fleet diagnostics module
+  tests/receive.rs real datagrams on real sockets
+```
 
 ---
 
@@ -162,9 +184,41 @@ render dark. The Sunrise2IP's `Shutter1` function at DMX 0 is literally
 
 ---
 
+## Rendering notes
+
+**Three passes, and it has to be three.** Opaque scene into an offscreen target
+(which fills a depth texture) -> beams into a *half-resolution* target, sampling
+that depth -> composite. The beams cannot share pass 1's depth buffer because a
+shader may not sample the attachment it is rendering against, and they must not
+plain depth-test or a camera sitting inside a beam loses it entirely.
+
+**Performance is about draw calls and fill rate, in that order.** The Demostage
+evaluates to **1,721 emitters**. Two mistakes each took it to under 1 fps:
+
+- **A cloned material per emitter.** 1,721 unique materials is 1,721 draw calls
+  and shader binds a frame. One shared material and one shared unit cube scaled
+  per node fixed it.
+- **A volumetric cone per emitter.** 1,600 of those emitters are LED wall
+  pixels rated at **100 lumens**. They now go through an instanced billboard
+  (`glow.ts`) — one draw call for the lot — and only emitters above `minFlux`
+  get a raymarched cone. 112 cones, 1,600 glows, ~514 draw calls, 60-70 fps.
+
+**Beams are gain-corrected, not physical.** The integral of 1/d² through a few
+metres of haze is ~0.01, which is black. `BEAM_GAIN` puts it in range so
+exposure 1.0 is the default look, and the composite applies a Reinhard knee so
+a dozen overlapping beams roll off instead of clipping to flat white.
+
+**A page that is not composited does not run `requestAnimationFrame`.** A hidden
+or backgrounded tab reports 0 fps, 0 beams and 0 draw calls however well the
+renderer works — indistinguishable from a dead render loop. That is what
+`scripts/verify-render.mjs` exists for: it drives a real Chrome over CDP with
+the anti-throttling flags, feeds a real MVR through the app's own file input via
+`DOM.setFileInputFiles`, and reports the live counters plus a screenshot.
+
 ## Verified vs assumed
 
-**Verified against real files** (46 tests, typecheck clean):
+**Verified against real files** (52 TS + 22 Rust unit + 3 Rust integration tests,
+typecheck clean):
 
 - All 119 Demostage fixtures parse, across the expected 28 universes, with zero
   warnings and no mode fallbacks.
@@ -177,13 +231,28 @@ render dark. The Sunrise2IP's `Shutter1` function at DMX 0 is literally
 - Pan/Tilt/Zoom physical extremes, 16-bit centring, CMY subtraction, master-dimmer
   gating of sub-pixels.
 
+- **The full show renders.** 119 fixtures, 28 universes, 112 volumetric beams
+  and 1,600 glows at 60-70 fps, driven by the built-in demo source, verified in
+  a real Chrome with a screenshot.
+- **The receive path works on real sockets** (`cargo test --test receive --
+  --ignored`): sACN arrives on 5568 and is zero-filled to 512; an Art-Net
+  Port-Address of 6 correctly surfaces as universe 7; a priority-200 source
+  overrides a priority-100 one end to end.
+- **The desktop bundle launches** and stays up — `.app` and `.dmg`, arm64,
+  adhoc linker-signed.
+
 **Not verified — do not describe as working:**
 
-- **Nothing has ever been rendered.** There is no renderer yet.
-- **No live DMX of any kind has ever been received.** No Art-Net, no sACN, no
-  USB interface, no CITP. None of that code exists yet.
-- **No console has ever been connected**, though grandMA3 2.2.5 and Capture 2026
-  are both installed on the development Mac and are the intended test rig.
+- **No real console has ever driven it.** Every DMX packet so far has come from
+  a test that wrote it. grandMA3 2.2.5 and Capture 2026 are both installed on
+  the development Mac and are the intended test rig.
+- **No DMX interface has ever been connected.** The Enttec DMX USB Pro path is
+  written from the protocol document and has never seen a widget — its framing
+  is unit-tested, its behaviour is not.
+- **CITP is not built at all.** Capability reports `false` so the UI hides it.
+- **Fixture bodies are proxy boxes**, sized from real GDTF `Model` dimensions.
+  The `.3ds` meshes inside a GDTF are not loaded.
+- **Windows and Linux have never been built**, only macOS arm64.
 - **Only one MVR has ever been parsed.** Exports from Vectorworks, Capture,
   WYSIWYG and Depence are untested; the `universe.channel` address form is
   implemented from the spec and has never seen a real file that uses it.

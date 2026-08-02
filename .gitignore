@@ -10,3 +10,4 @@ target/
 # skip when it is absent. See packages/core/test/fixtures.ts.
 *.mvr
 *.gdtf
+public/dev/
