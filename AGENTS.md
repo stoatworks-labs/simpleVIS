@@ -301,7 +301,12 @@ typecheck clean):
 - **No DMX interface has ever been connected.** The Enttec DMX USB Pro path is
   written from the protocol document and has never seen a widget — its framing
   is unit-tested, its behaviour is not.
-- **CITP is not built at all.** Capability reports `false` so the UI hides it.
+- **CITP levels and patch have never come from a console.** PINF, SDMX and FPTC
+  *are* built, and the desktop capability reports `true` (`citp: false` remains
+  correct for the browser build, which cannot receive UDP at all). First contact
+  with a real peer is verified against Capture 2026 — but Capture is a
+  `Visualizer`, so it sends no `ChBk` and no `Ptch`. **MSEX and CAEX are not
+  implemented**, so simpleVIS cannot stream its viewport back to a desk.
 - **Fixture bodies are proxy boxes**, sized from real GDTF `Model` dimensions.
   The `.3ds` meshes inside a GDTF are not loaded.
 - **Windows and Linux have never been built**, only macOS arm64.

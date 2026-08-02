@@ -123,8 +123,10 @@ this — including the several ways an MVR will quietly render wrong.
 
 The short version: the import chain, DMX evaluation and protocol parsers are
 tested against real files and real packet layouts; **nothing has been driven by
-a real console or a real DMX interface yet**. [AGENTS.md](AGENTS.md) has the
-precise account, and it is kept honest.
+a real console or a real DMX interface yet**. CITP has had first contact with a
+real peer (Capture 2026), but Capture is a DMX *consumer* like simpleVIS, so
+**levels and patch from a real console remain unverified**.
+[AGENTS.md](AGENTS.md) has the precise account, and it is kept honest.
 
 ## Licence
 
