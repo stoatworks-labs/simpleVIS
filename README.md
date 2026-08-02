@@ -48,10 +48,13 @@ channels across a hundred `GeometryReference`s is correctly resolved to its real
 Two sources per universe are merged HTP or LTP with a 4-second timeout; a third
 is refused and reported rather than silently dropped.
 
-**CITP is not implemented yet** (v0.2.0). Worth stating plainly because it is
-often assumed to carry levels and does not: CITP is discovery, *patch* exchange
-and streaming the viewport back to the console. Levels always arrive over
-Art-Net or sACN.
+**CITP is not implemented yet** (v0.2.0). Its layers are PINF (peer discovery),
+**SDMX (Send DMX — which does carry levels**, as channel blocks), FPTC (fixture
+patch exchange), FSEL/FINF (selection and information) and MSEX/CAEX (media
+server extensions, including video stream frames). In practice most consoles
+still send levels over Art-Net or sACN and use CITP for patch and selection —
+SDMX even has a *Set External Source* message for saying exactly that — but CITP
+is not limited to it.
 
 ## Video
 

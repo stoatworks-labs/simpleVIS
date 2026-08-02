@@ -35,18 +35,31 @@ Follow the fleet's hosted-build pattern (see `reference_pages_demo_hosting`): a
 Tauri client code at all and nothing at runtime asks which environment it is
 in.
 
-### CITP is not a level source
+### What CITP actually is
 
-Worth stating because the brief for this project assumed otherwise. CITP is four
-sub-protocols and none of them carries DMX: **PINF** (peer discovery), **FPTC**
-(fixture *patch* exchange — the console tells the visualiser what is patched
-where), **MSEX** (media-server thumbnails), **CaSt** (the visualiser streams its
-camera view *back* to the console, which is how a live visualiser feed appears in
-Eos or grandMA3). Levels always arrive over Art-Net or sACN.
+⚠️ **An earlier version of this document said CITP carries no DMX and named a
+layer "CaSt". Both were wrong.** Corrected against the specification and the
+`citp` crate's layer list:
 
-simpleVIS targets FPTC and CaSt. **Neither is built yet** (v0.2.0); the
-capability reports `false` so the UI hides it rather than offering a dead
-control.
+| Layer | What it does |
+|---|---|
+| **PINF** | Peer discovery (`PLoc`, `PNam`), multicast |
+| **SDMX** | **Send DMX — this does carry levels.** `ChBk` (channel block), `ChLs` (channel list), `UNam`, `EnId`, `SXSr` |
+| **FPTC** | Fixture patch exchange: `Ptch`, `UPtc`, `SPtc` |
+| **FSEL** / **FINF** | Fixture selection and information |
+| **MSEX** | Media server extensions — thumbnails, and video **stream frames** |
+| **CAEX** | Capture extensions (CITP 2.0) |
+
+There is **no `CaSt` layer**. Streaming a viewport back to a console is MSEX
+(and CAEX for Capture's own extensions), not a layer of its own.
+
+What is true is the weaker claim: most consoles *in practice* send levels over
+Art-Net or sACN and use CITP for patch and selection — SDMX's `SXSr` (Set
+External Source) exists precisely to say "take my levels from Art-Net instead".
+But CITP is not incapable of carrying them.
+
+**None of it is built yet** (v0.2.0); the capability reports `false` so the UI
+hides it rather than offering a dead control.
 
 ---
 
