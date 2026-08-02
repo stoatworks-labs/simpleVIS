@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Patch } from '@simplevis/core';
-import type { NetworkInterface, SimpleVisApi, SourceStatus } from '../api.js';
+import type { CitpPeer, NetworkInterface, SimpleVisApi, SourceStatus } from '../api.js';
 
 interface Props {
   api: SimpleVisApi;
@@ -25,6 +25,8 @@ export function Sidebar(props: Props) {
   const [ports, setPorts] = useState<readonly string[]>([]);
   const [selectedPort, setSelectedPort] = useState('');
   const [serialOpen, setSerialOpen] = useState(false);
+  const [citpOn, setCitpOn] = useState(false);
+  const [citpPeers, setCitpPeers] = useState<readonly CitpPeer[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -59,6 +61,27 @@ export function Sidebar(props: Props) {
     if (!api.capabilities.usb) return;
     api.listSerialPorts().then(setPorts).catch(() => setPorts([]));
   }, [api]);
+
+  const toggleCitp = async () => {
+    if (citpOn) {
+      await api.stopCitp();
+      setCitpOn(false);
+      setCitpPeers([]);
+    } else {
+      await api.startCitp(selectedInterface);
+      setCitpOn(true);
+    }
+  };
+
+  // Peers appear as their announcements arrive, so poll while listening rather
+  // than reading once at start-up and showing an empty list forever.
+  useEffect(() => {
+    if (!citpOn) return;
+    const tick = () => api.listCitpPeers().then(setCitpPeers).catch(() => {});
+    tick();
+    const id = setInterval(tick, 2000);
+    return () => clearInterval(id);
+  }, [api, citpOn]);
 
   const byType = new Map<string, number>();
   for (const f of load?.patch.fixtures ?? []) {
@@ -188,6 +211,32 @@ export function Sidebar(props: Props) {
               Enttec DMX USB Pro. An Open DMX USB has no receive path, so it
               cannot be used as an input.
             </p>
+          </>
+        )}
+
+        {/* CITP. Discovery is multicast and the rest is TCP, so like the
+            others it cannot exist in the hosted build. */}
+        {api.capabilities.citp && (
+          <>
+            <button className="button" onClick={toggleCitp}>
+              {citpOn ? 'Stop CITP' : 'Listen for CITP'}
+            </button>
+            <p className="hint">
+              Discovers consoles and visualisers, takes their patch, and accepts
+              levels over SDMX.
+            </p>
+            {citpOn && (
+              <ul className="sources">
+                {citpPeers.length === 0 && <li className="hint">Looking for peers…</li>}
+                {citpPeers.map((p) => (
+                  <li key={p.address}>
+                    <span className="pill pill--citp">{p.kind || 'peer'}</span>
+                    <span className="sources__label">{p.name || p.address}</span>
+                    <em>{p.connected ? 'connected' : p.state || 'seen'}</em>
+                  </li>
+                ))}
+              </ul>
+            )}
           </>
         )}
 

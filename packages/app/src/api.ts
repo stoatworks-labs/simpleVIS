@@ -43,6 +43,25 @@ export interface Capabilities {
   readonly backend: string;
 }
 
+/** A CITP peer seen on the network. */
+export interface CitpPeer {
+  readonly name: string;
+  /** "LightingConsole", "MediaServer", "Visualizer", … */
+  readonly kind: string;
+  readonly state: string;
+  readonly address: string;
+  readonly connected: boolean;
+}
+
+/** A fixture the console says is patched, as CITP/FPTC reports it. */
+export interface CitpPatchEntry {
+  readonly fixtureId: number;
+  /** 1-based, already converted from CITP's 0-based universe. */
+  readonly universe: number;
+  readonly channel: number;
+  readonly channelCount: number;
+}
+
 export interface NetworkInterface {
   readonly name: string;
   readonly address: string;
@@ -69,6 +88,12 @@ export interface SimpleVisApi {
    * work — which looks like "sACN is broken" rather than "no group joined".
    */
   setUniverses(universes: readonly number[]): Promise<void>;
+  /** Start CITP discovery. Levels arrive on the same universe channel. */
+  startCitp(interfaceAddress: string): Promise<void>;
+  stopCitp(): Promise<void>;
+  listCitpPeers(): Promise<readonly CitpPeer[]>;
+  /** Subscribe to patch updates pushed by a console over FPTC. */
+  onCitpPatch(handler: (patch: readonly CitpPatchEntry[]) => void): () => void;
 }
 
 /**
@@ -95,6 +120,10 @@ const browserApi: SimpleVisApi = {
   openSerial: async () => {},
   closeSerial: async () => {},
   setUniverses: async () => {},
+  startCitp: async () => {},
+  stopCitp: async () => {},
+  listCitpPeers: async () => [],
+  onCitpPatch: () => () => {},
 };
 
 let installed: SimpleVisApi | undefined;

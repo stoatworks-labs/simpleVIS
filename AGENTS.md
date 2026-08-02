@@ -58,8 +58,23 @@ Art-Net or sACN and use CITP for patch and selection — SDMX's `SXSr` (Set
 External Source) exists precisely to say "take my levels from Art-Net instead".
 But CITP is not incapable of carrying them.
 
-**None of it is built yet** (v0.2.0); the capability reports `false` so the UI
-hides it rather than offering a dead control.
+**PINF, SDMX and FPTC are implemented** (`src-tauri/src/protocol/citp.rs` for
+the wire format, `src-tauri/src/citp.rs` for the peer). MSEX and CAEX are not.
+
+Two things about the transport that are easy to get wrong, because both fail as
+"the visualiser just sits there":
+
+- **`PLoc` is multicast UDP; everything else is TCP** on the port `PLoc`
+  advertises. A `PLoc` sent over an established TCP connection carries port 0
+  — sending the real port there invites a second connection to nothing.
+- **`ChBk` blocks are partial.** A console sends only what changed. Treating a
+  block as a whole universe blanks everything outside it, so blocks are
+  accumulated per peer before being merged.
+
+Content types are matched as **ASCII bytes**, never as `u32` constants:
+reference headers in the wild have at least two byte-reversed (`COOKIE_PINF_PNAM`
+and `COOKIE_SDMX_ENID` spell theirs big-endian while the rest are little-endian),
+and matching on `*b"PLoc"` cannot inherit that.
 
 ---
 

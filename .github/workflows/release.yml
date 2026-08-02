@@ -42,7 +42,10 @@ jobs:
         # The socket tests bind the real Art-Net and sACN ports. A CI runner has
         # them free, which a lighting workstation usually does not — so this is
         # the one place they run unconditionally.
-        run: cargo test && cargo test --test receive -- --ignored --test-threads=1
+        run: |
+          cargo test
+          cargo test --test receive -- --ignored --test-threads=1
+          cargo test --test citp_peer -- --ignored --test-threads=1
 
   build:
     needs: test

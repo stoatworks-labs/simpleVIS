@@ -138,6 +138,7 @@ body {
 .pill--sacn   { color: #6ee7b7; }
 .pill--usb    { color: #ffb454; }
 .pill--demo   { color: #b98cff; }
+.pill--citp   { color: #f472b6; }
 .warn { color: var(--warn); font-size: 11px; }
 
 .warnings { font-size: 11px; color: var(--warn); }

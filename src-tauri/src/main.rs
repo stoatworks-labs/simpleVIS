@@ -13,13 +13,14 @@ mod diag;
 
 // The protocol, merge, socket and serial code lives in the library half of
 // this crate so the integration tests in `tests/` can drive it without a GUI.
-use simplevis::{merge, net, serial};
+use simplevis::{citp, merge, net, serial};
 
 use std::net::Ipv4Addr;
 use std::sync::Mutex;
 
 use tauri::{Emitter, Manager};
 
+use citp::{CitpPeer, CitpPeerInfo, PatchedFixture};
 use merge::MergeMode;
 use net::{InputEngine, SourceStatus, UniverseFrame};
 use serial::SerialInput;
@@ -28,6 +29,7 @@ struct AppState {
     input: InputEngine,
     usb: SerialInput,
     usb_universe: Mutex<u16>,
+    citp: CitpPeer,
 }
 
 #[derive(serde::Serialize)]
@@ -118,6 +120,51 @@ fn set_usb_universe(state: tauri::State<'_, AppState>, universe: u16) {
     *state.usb_universe.lock().unwrap() = universe;
 }
 
+/// Start the CITP peer: multicast discovery, then TCP to whatever answers.
+///
+/// Levels arrive on the same `simplevis://universe` channel as Art-Net and
+/// sACN, so the front end needs to know nothing about which protocol delivered
+/// a frame.
+#[tauri::command]
+fn start_citp(
+    app: tauri::AppHandle,
+    state: tauri::State<'_, AppState>,
+    interface_address: String,
+) -> Result<(), String> {
+    let interface: Ipv4Addr = interface_address.parse().unwrap_or(Ipv4Addr::UNSPECIFIED);
+    let frame_app = app.clone();
+    let patch_app = app.clone();
+
+    state
+        .citp
+        .start(
+            interface,
+            "simpleVIS".to_string(),
+            move |universe, slots| {
+                let _ = frame_app.emit("simplevis://universe", UniverseFrame { universe, slots });
+            },
+            move |fixtures: Vec<PatchedFixture>| {
+                let _ = patch_app.emit("simplevis://citp-patch", fixtures);
+            },
+        )
+        .map_err(|e| format!("could not start CITP: {e}"))
+}
+
+#[tauri::command]
+fn stop_citp(state: tauri::State<'_, AppState>) {
+    state.citp.stop();
+}
+
+#[tauri::command]
+fn citp_peers(state: tauri::State<'_, AppState>) -> Vec<CitpPeerInfo> {
+    state.citp.peers()
+}
+
+#[tauri::command]
+fn citp_patch(state: tauri::State<'_, AppState>) -> Vec<PatchedFixture> {
+    state.citp.patch()
+}
+
 #[tauri::command]
 fn collect_diagnostics(app: tauri::AppHandle) -> Result<String, String> {
     diag::collect(&app).map_err(|e| e.to_string())
@@ -132,6 +179,7 @@ fn main() {
                 input: InputEngine::new(),
                 usb: SerialInput::new(),
                 usb_universe: Mutex::new(1),
+                citp: CitpPeer::new(),
             });
             Ok(())
         })
@@ -145,6 +193,10 @@ fn main() {
             open_serial,
             close_serial,
             set_usb_universe,
+            start_citp,
+            stop_citp,
+            citp_peers,
+            citp_patch,
             collect_diagnostics,
         ])
         .run(tauri::generate_context!())

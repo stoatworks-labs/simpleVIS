@@ -44,17 +44,17 @@ channels across a hundred `GeometryReference`s is correctly resolved to its real
 | **sACN** (E1.31) | Priority arbitration, CID source identity, multicast group joins per patched universe |
 | **Art-Net 4** | ArtDmx, ArtPoll replies so consoles list simpleVIS as a node |
 | **USB DMX** | Enttec DMX USB Pro. An *Open* DMX USB has no receive path and cannot be an input |
+| **CITP** | Peer discovery (PINF), levels over SDMX, and fixture patch from the console over FPTC |
 
 Two sources per universe are merged HTP or LTP with a 4-second timeout; a third
 is refused and reported rather than silently dropped.
 
-**CITP is not implemented yet** (v0.2.0). Its layers are PINF (peer discovery),
-**SDMX (Send DMX — which does carry levels**, as channel blocks), FPTC (fixture
-patch exchange), FSEL/FINF (selection and information) and MSEX/CAEX (media
-server extensions, including video stream frames). In practice most consoles
-still send levels over Art-Net or sACN and use CITP for patch and selection —
-SDMX even has a *Set External Source* message for saying exactly that — but CITP
-is not limited to it.
+CITP covers three of its layers: **PINF** for peer discovery, **SDMX** for
+levels (it does carry them, as channel blocks — a common misconception says
+otherwise), and **FPTC** so the patch can follow the desk without re-importing
+an MVR. `SXSr` is honoured, so a console that says "take my levels from Art-Net"
+is not also counted as a CITP source. MSEX and CAEX — thumbnails and viewport
+streaming — are not implemented.
 
 ## Video
 

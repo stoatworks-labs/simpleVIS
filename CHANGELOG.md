@@ -1,5 +1,21 @@
 # Changelog
 
+## Unreleased
+
+### CITP
+- **PINF** peer discovery: announces simpleVIS on 224.0.0.180:4809 and dials
+  peers that advertise a TCP port. Both directions, because a console may
+  expect to connect to the visualiser or to be connected to.
+- **SDMX** levels. Channel blocks are partial and are accumulated into whole
+  universes per peer, then fed to the same merge engine Art-Net and sACN use —
+  so a console sending both merges normally instead of one overwriting the
+  other. Blind data is dropped, and `SXSr` (Set External Source) is honoured.
+- **FPTC** fixture patch: `Ptch`, `UPtc` and an `SPtc` request on connect.
+
+Verified over real sockets against a scripted console — discovery, TCP framing,
+partial-block assembly, blind rejection, and several messages arriving in one
+segment. **Not yet tested against a real console or Capture.**
+
 ## v0.1.0 — 2026-08-02
 
 First release.

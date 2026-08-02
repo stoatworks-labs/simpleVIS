@@ -5,4 +5,5 @@
 //! exercised without a network.
 
 pub mod artnet;
+pub mod citp;
 pub mod sacn;

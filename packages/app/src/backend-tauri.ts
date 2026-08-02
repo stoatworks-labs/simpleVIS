@@ -12,6 +12,8 @@ import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import type {
   Capabilities,
+  CitpPatchEntry,
+  CitpPeer,
   NetworkInterface,
   SimpleVisApi,
   SourceStatus,
@@ -21,9 +23,7 @@ import type {
 const capabilities: Capabilities = {
   network: true,
   usb: true,
-  // CITP is not implemented yet. Declared false so the UI hides it rather than
-  // offering a control that does nothing — see AGENTS.md.
-  citp: false,
+  citp: true,
   filesystem: true,
   backend: 'Desktop',
 };
@@ -90,6 +90,30 @@ export const tauriApi: SimpleVisApi = {
   closeSerial: () => invoke('close_serial'),
 
   setUniverses: (universes) => invoke('set_universes', { universes: [...universes] }),
+
+  startCitp: (interfaceAddress: string) => invoke('start_citp', { interfaceAddress }),
+
+  stopCitp: () => invoke('stop_citp'),
+
+  listCitpPeers: () => invoke<CitpPeer[]>('citp_peers'),
+
+  onCitpPatch(handler: (patch: readonly CitpPatchEntry[]) => void) {
+    // Same unsubscribe-before-subscribe race as the universe listener: `listen`
+    // resolves asynchronously, so a component that unmounts quickly must not
+    // leak a listener firing into a dead handler.
+    let unlisten: (() => void) | undefined;
+    let cancelled = false;
+    listen<CitpPatchEntry[]>('simplevis://citp-patch', (event) => handler(event.payload)).then(
+      (fn) => {
+        if (cancelled) fn();
+        else unlisten = fn;
+      },
+    );
+    return () => {
+      cancelled = true;
+      unlisten?.();
+    };
+  },
 };
 
 export function collectDiagnostics(): Promise<string> {

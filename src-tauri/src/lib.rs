@@ -5,6 +5,7 @@
 //! send real datagrams**, and proving the receive path works needs the engine
 //! without the GUI around it.
 
+pub mod citp;
 pub mod merge;
 pub mod net;
 pub mod protocol;
