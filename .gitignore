@@ -1,0 +1,12 @@
+node_modules/
+dist/
+!demo/dist/
+target/
+*.tsbuildinfo
+.DS_Store
+
+# Never commit fixture files from vendor libraries — they are the vendors'
+# content. Tests locate MA's Demostage_MVR.mvr in an installed grandMA3 and
+# skip when it is absent. See packages/core/test/fixtures.ts.
+*.mvr
+*.gdtf
