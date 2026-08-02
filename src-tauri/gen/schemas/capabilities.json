@@ -1,1 +1,1 @@
-{}
+{"default":{"identifier":"default","description":"What the main window is allowed to do. Deliberately small: simpleVIS reads DMX from the network and a serial port through its own commands, so the only plugin surface it needs is opening a URL in the system browser — which is what every link in the About dialog does.","local":true,"windows":["main"],"permissions":["core:default","opener:allow-open-url"]}}

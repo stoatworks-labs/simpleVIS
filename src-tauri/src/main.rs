@@ -174,6 +174,7 @@ fn main() {
     diag::init();
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_opener::init())
         .setup(|app| {
             app.manage(AppState {
                 input: InputEngine::new(),
