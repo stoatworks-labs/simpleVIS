@@ -33,6 +33,45 @@ body {
   height: 100%;
 }
 
+/*
+ * Hosted build only. `data-hosted` is set by the transformIndexHtml plugin in
+ * vite.config.ts and never by the Tauri build, so the desktop window keeps the
+ * viewport lock above and cannot be scrolled off the visualiser.
+ *
+ * On the Worker the support footer is appended after #root, where `height:
+ * 100%` plus `overflow: hidden` leaves it unreachable. The height has to move
+ * onto `.app` as 100vh in the same breath as it comes off the ancestors:
+ * releasing html/body/#root while `.app` is still `height: 100%` resolves that
+ * percentage against an auto-height parent and collapses the grid. See the
+ * worked example at the top of pixel-peeker/src/styles.css.
+ */
+html[data-hosted],
+html[data-hosted] body,
+html[data-hosted] #root {
+  height: auto;
+}
+
+html[data-hosted] body {
+  overflow: visible;
+}
+
+/*
+ * grid-template-rows and overflow are not decoration here. `.app` declares only
+ * columns, so its single row is auto-sized — and once body stops clipping, an
+ * auto row is free to grow past the 100vh container. The viewer canvas is
+ * `height: 100%` of `.viewport`, and viewer.ts calls setSize(w, h, false),
+ * which writes the canvas's *attribute* height and deliberately leaves its
+ * style alone. Break the percentage chain and that attribute becomes the
+ * canvas's layout height, which is then read back as the next clientHeight:
+ * the viewport grew ~30x per frame until the document was 23,520px tall.
+ * Pinning the row to minmax(0, 1fr) keeps the chain resolvable.
+ */
+html[data-hosted] .app {
+  height: 100vh;
+  grid-template-rows: minmax(0, 1fr);
+  overflow: hidden;
+}
+
 /* ------------------------------------------------------------- sidebar */
 
 .sidebar {
