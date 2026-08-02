@@ -52,18 +52,24 @@ jobs:
         include:
           # macOS arm64 and x86_64 both cross-compile from macos-14.
           # The Intel runners (macos-13) are retired — do not reintroduce them.
+          # Bundle targets are per-platform: naming a bundler the host cannot
+          # run (nsis on macOS, dmg on Linux) fails the whole build rather than
+          # being skipped.
           - platform: macos-14
             target: aarch64-apple-darwin
-            args: --target aarch64-apple-darwin
+            args: --target aarch64-apple-darwin --bundles app,dmg
           - platform: macos-14
             target: x86_64-apple-darwin
-            args: --target x86_64-apple-darwin
+            args: --target x86_64-apple-darwin --bundles app,dmg
+          # No AppImage: its bundler needs FUSE, which CI runners lack, and it
+          # fails there even with APPIMAGE_EXTRACT_AND_RUN=1 — taking the deb
+          # and rpm targets down with it.
           - platform: ubuntu-22.04
             target: x86_64-unknown-linux-gnu
-            args: ''
+            args: --bundles deb,rpm
           - platform: windows-latest
             target: x86_64-pc-windows-msvc
-            args: ''
+            args: --bundles nsis
 
     runs-on: ${{ matrix.platform }}
     steps:
@@ -98,10 +104,7 @@ jobs:
           releaseName: simpleVIS ${{ github.ref_name }}
           releaseDraft: false
           prerelease: false
-          # No AppImage: its bundler needs FUSE, which CI runners lack, and it
-          # fails there even with APPIMAGE_EXTRACT_AND_RUN=1 — taking the deb
-          # and rpm targets down with it. Linux ships .deb and .rpm.
-          args: ${{ matrix.args }} --bundles app,dmg,nsis,deb,rpm
+          args: ${{ matrix.args }}
 
   hosted:
     needs: test
