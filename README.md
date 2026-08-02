@@ -67,15 +67,15 @@ the app's own controls.
 
 ## Download
 
-**[v0.1.0](https://github.com/stoatworks-labs/simpleVIS/releases/tag/v0.1.0)** — prebuilt for macOS, Windows and Linux. Pick your platform:
+**[v0.2.0](https://github.com/stoatworks-labs/simpleVIS/releases/tag/v0.2.0)** — prebuilt for macOS, Windows and Linux. Pick your platform:
 
 <details>
 <summary><b>macOS</b> — Apple Silicon, Intel</summary>
 
 | Build | Download | Size |
 | --- | --- | --- |
-| Apple Silicon · .dmg disk image | [`simpleVIS_0.1.0_aarch64.dmg`](https://github.com/stoatworks-labs/simpleVIS/releases/download/v0.1.0/simpleVIS_0.1.0_aarch64.dmg) | 2.8 MB |
-| Intel · .dmg disk image | [`simpleVIS_0.1.0_x64.dmg`](https://github.com/stoatworks-labs/simpleVIS/releases/download/v0.1.0/simpleVIS_0.1.0_x64.dmg) | 2.8 MB |
+| Apple Silicon · .dmg disk image | [`simpleVIS_0.2.0_aarch64.dmg`](https://github.com/stoatworks-labs/simpleVIS/releases/download/v0.2.0/simpleVIS_0.2.0_aarch64.dmg) | 2.8 MB |
+| Intel · .dmg disk image | [`simpleVIS_0.2.0_x64.dmg`](https://github.com/stoatworks-labs/simpleVIS/releases/download/v0.2.0/simpleVIS_0.2.0_x64.dmg) | 2.9 MB |
 
 </details>
 
@@ -84,7 +84,7 @@ the app's own controls.
 
 | Build | Download | Size |
 | --- | --- | --- |
-| x64 · .exe installer | [`simpleVIS_0.1.0_x64-setup.exe`](https://github.com/stoatworks-labs/simpleVIS/releases/download/v0.1.0/simpleVIS_0.1.0_x64-setup.exe) | 2.0 MB |
+| x64 · .exe installer | [`simpleVIS_0.2.0_x64-setup.exe`](https://github.com/stoatworks-labs/simpleVIS/releases/download/v0.2.0/simpleVIS_0.2.0_x64-setup.exe) | 2.1 MB |
 
 </details>
 
@@ -93,15 +93,15 @@ the app's own controls.
 
 | Build | Download | Size |
 | --- | --- | --- |
-| x64 · .deb package (Debian/Ubuntu) | [`simpleVIS_0.1.0_amd64.deb`](https://github.com/stoatworks-labs/simpleVIS/releases/download/v0.1.0/simpleVIS_0.1.0_amd64.deb) | 2.5 MB |
-| x64 · .rpm package (Fedora/RHEL) | [`simpleVIS-0.1.0-1.x86_64.rpm`](https://github.com/stoatworks-labs/simpleVIS/releases/download/v0.1.0/simpleVIS-0.1.0-1.x86_64.rpm) | 2.5 MB |
+| x64 · .deb package (Debian/Ubuntu) | [`simpleVIS_0.2.0_amd64.deb`](https://github.com/stoatworks-labs/simpleVIS/releases/download/v0.2.0/simpleVIS_0.2.0_amd64.deb) | 2.5 MB |
+| x64 · .rpm package (Fedora/RHEL) | [`simpleVIS-0.2.0-1.x86_64.rpm`](https://github.com/stoatworks-labs/simpleVIS/releases/download/v0.2.0/simpleVIS-0.2.0-1.x86_64.rpm) | 2.5 MB |
 
 </details>
 
 Also in this release:
 
-- [`simpleVIS_aarch64.app.tar.gz`](https://github.com/stoatworks-labs/simpleVIS/releases/latest/download/simpleVIS_aarch64.app.tar.gz) — Source tarball, 2.5 MB
-- [`simpleVIS_x64.app.tar.gz`](https://github.com/stoatworks-labs/simpleVIS/releases/latest/download/simpleVIS_x64.app.tar.gz) — Source tarball, 2.6 MB
+- [`simpleVIS_aarch64.app.tar.gz`](https://github.com/stoatworks-labs/simpleVIS/releases/latest/download/simpleVIS_aarch64.app.tar.gz) — Source tarball, 2.6 MB
+- [`simpleVIS_x64.app.tar.gz`](https://github.com/stoatworks-labs/simpleVIS/releases/latest/download/simpleVIS_x64.app.tar.gz) — Source tarball, 2.7 MB
 
 All builds, checksums and release notes: [github.com/stoatworks-labs/simpleVIS/releases](https://github.com/stoatworks-labs/simpleVIS/releases).
 
