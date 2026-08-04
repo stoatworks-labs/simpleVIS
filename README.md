@@ -1,6 +1,11 @@
 # simpleVIS
 
-> This project was built with AI assistance using [Claude Code](https://claude.com/claude-code).
+> **AI-assisted project.** This codebase was created with [Claude](https://claude.com/claude-code)
+> (Anthropic), directed and reviewed by a human author. MVR and GDTF import is
+> tested against real files, and the Art-Net and sACN parsers against real packet
+> layouts. **Nothing has been driven by a real console or a real DMX interface
+> yet**, so levels and patch coming from a desk remain unverified — see
+> [Verified vs assumed](#verified-vs-assumed).
 
 A lightweight real-time lighting visualiser. Import an MVR, take live levels
 over Art-Net, sACN or USB DMX, fly a camera around the rig, and see your
