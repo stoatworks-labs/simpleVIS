@@ -79,8 +79,8 @@ the app's own controls.
 
 | Build | Download | Size |
 | --- | --- | --- |
-| Apple Silicon · .dmg disk image | [`simpleVIS_0.2.0_aarch64.dmg`](https://github.com/stoatworks-labs/simpleVIS/releases/download/v0.2.0/simpleVIS_0.2.0_aarch64.dmg) | 2.8 MB |
-| Intel · .dmg disk image | [`simpleVIS_0.2.0_x64.dmg`](https://github.com/stoatworks-labs/simpleVIS/releases/download/v0.2.0/simpleVIS_0.2.0_x64.dmg) | 2.9 MB |
+| Apple Silicon · .dmg disk image | [`simpleVIS_0.2.0_aarch64.dmg`](https://github.com/stoatworks-labs/simpleVIS/releases/download/v0.2.0/simpleVIS_0.2.0_aarch64.dmg) | 2.6 MB |
+| Intel · .dmg disk image | [`simpleVIS_0.2.0_x64.dmg`](https://github.com/stoatworks-labs/simpleVIS/releases/download/v0.2.0/simpleVIS_0.2.0_x64.dmg) | 2.7 MB |
 
 </details>
 
