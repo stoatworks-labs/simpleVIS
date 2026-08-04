@@ -135,6 +135,10 @@ real peer (Capture 2026), but Capture is a DMX *consumer* like simpleVIS, so
 **levels and patch from a real console remain unverified**.
 [AGENTS.md](AGENTS.md) has the precise account, and it is kept honest.
 
+<!-- attributions:start -->
+This project is built on other people's work — see [ATTRIBUTIONS.md](ATTRIBUTIONS.md).
+<!-- attributions:end -->
+
 ## Licence
 
 MIT. See [LICENSE](LICENSE).
