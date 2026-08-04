@@ -105,6 +105,8 @@ Also in this release:
 
 All builds, checksums and release notes: [github.com/stoatworks-labs/simpleVIS/releases](https://github.com/stoatworks-labs/simpleVIS/releases).
 
+The Windows builds are unsigned, so SmartScreen warns once.
+
 <!-- downloads:end -->
 
 ## Development
