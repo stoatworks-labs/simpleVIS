@@ -1,0 +1,43 @@
+name: ci
+
+# Until this existed the repo had only a tag-triggered release, so no workflow
+# ran on `pull_request` and Dependabot bumps arrived with nothing to gate a
+# merge on. They accumulated: five open at the time this was added, spanning
+# the npm group, vitest, @vitejs/plugin-react and two action bumps.
+#
+# Every script here fans out across the workspaces with --if-present, so this
+# covers packages/* rather than the root alone.
+#
+# Not covered: the Rust half under /src-tauri. It has no Dependabot entry
+# either — LEQtion's dependabot.yml shows the cargo block that is missing —
+# so it is unmanaged rather than merely unchecked.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # Deliberately a plain `npm ci` — no --legacy-peer-deps. A bump that only
+      # installs by ignoring the peer graph is exactly what this is here to catch.
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build
