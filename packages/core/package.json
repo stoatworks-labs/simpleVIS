@@ -1,6 +1,6 @@
 {
   "name": "@simplevis/core",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Isomorphic MVR/GDTF parsing and DMX evaluation. No DOM, no Node APIs \u2014 runs in a browser tab, in Tauri's webview, and under vitest.",
   "license": "MIT",
   "type": "module",
