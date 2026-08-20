@@ -40,6 +40,7 @@ function supportFooter(mode: string): Plugin {
                 defer: true,
                 'data-app': 'simpleVIS',
                 'data-repo': 'https://github.com/stoatworks-labs/simpleVIS',
+                'data-version': `v${pkg.version}`,
                 'data-note':
                   'It runs entirely in your browser — no account, and no rig you import is uploaded.',
               },
