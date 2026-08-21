@@ -23,8 +23,8 @@ use std::net::{IpAddr, Ipv4Addr, SocketAddr, TcpListener, UdpSocket};
 use std::sync::mpsc;
 use std::time::Duration;
 
-use simplevis::citp::CitpPeer;
-use simplevis::protocol::citp;
+use simplevis_lib::citp::CitpPeer;
+use simplevis_lib::protocol::citp;
 
 /// A `ChBk` for one universe, starting at `first_channel`.
 fn channel_block(blind: bool, universe: u8, first_channel: u16, levels: &[u8]) -> Vec<u8> {
@@ -83,7 +83,7 @@ fn exchange(
     script: impl FnOnce(&mut std::net::TcpStream) + Send + 'static,
 ) -> (
     mpsc::Receiver<(u16, Vec<u8>)>,
-    mpsc::Receiver<Vec<simplevis::citp::PatchedFixture>>,
+    mpsc::Receiver<Vec<simplevis_lib::citp::PatchedFixture>>,
     CitpPeer,
 ) {
     let console = FakeConsole::new();

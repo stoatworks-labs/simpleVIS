@@ -8,6 +8,18 @@ repository = "https://github.com/stoatworks-labs/simpleVIS"
 edition = "2021"
 rust-version = "1.77"
 
+[lib]
+# Tauri's mobile shells link the app in as a native library -- iOS wants a
+# staticlib to link into the Xcode target, Android a cdylib to load at
+# runtime -- while the integration tests and main.rs still want an ordinary
+# rlib. Without this block `tauri ios build` fails looking for libsimplevis.a.
+#
+# The `_lib` suffix looks redundant and is not: on Windows a bin and a
+# staticlib/cdylib of the same name collide over their output files.
+# https://github.com/rust-lang/cargo/issues/8519
+name = "simplevis_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
 [workspace]
 members = ["crates/diag"]
 
@@ -23,8 +35,13 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 socket2 = { version = "0.5", features = ["all"] }
 if-addrs = "0.13"
-serialport = "4"
 diag = { path = "crates/diag" }
+
+# No USB serial exists on iOS or Android, and the crate has no backend for
+# either, so it is not merely unused there -- it will not link. See serial.rs,
+# where the two call sites are gated on Tauri's `mobile` cfg.
+[target.'cfg(not(any(target_os = "ios", target_os = "android")))'.dependencies]
+serialport = "4"
 
 [features]
 # Tauri's own default; keeps `cargo build` honest without the CLI.

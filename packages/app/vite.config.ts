@@ -56,7 +56,18 @@ export default defineConfig(({ mode }) => ({
   // The About dialog shows the version the build actually produced. about-data.js
   // carries one baked at sync time as a fallback, and it goes stale the moment a
   // release is tagged; this is the one that is always right.
-  define: { __APP_VERSION__: JSON.stringify(`v${pkg.version}`) },
+  define: {
+    __APP_VERSION__: JSON.stringify(`v${pkg.version}`),
+    // iOS and Android go through the same `tauri` mode as the desktop build,
+    // so mode alone cannot tell them apart. Tauri sets TAURI_ENV_PLATFORM for
+    // every target it drives, and the two mobile values are the only ones that
+    // matter here: there is no USB serial on either, so the DMX interface has
+    // to be declared unavailable rather than offered and then failing.
+    // Declared in src/vite-env.d.ts.
+    __SIMPLEVIS_MOBILE__: JSON.stringify(
+      process.env.TAURI_ENV_PLATFORM === 'ios' || process.env.TAURI_ENV_PLATFORM === 'android',
+    ),
+  },
   plugins: [react(), supportFooter(mode)],
   // Both targets serve from the root: the Cloudflare Worker has its own
   // hostname, and Tauri loads from a file-ish origin. A /repo/ base path would

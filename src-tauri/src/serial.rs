@@ -18,15 +18,23 @@
 //! nothing to read; supporting it would mean advertising an input that can
 //! never deliver a frame.
 
+#[cfg(not(mobile))]
 use std::io::Read;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
+#[cfg(not(mobile))]
 use std::thread;
+#[cfg(not(mobile))]
 use std::time::Duration;
 
+// Only the widget path uses these, and that path is desktop-only.
+#[cfg(not(mobile))]
 const SOM: u8 = 0x7E;
+#[cfg(not(mobile))]
 const EOM: u8 = 0xE7;
+#[cfg(not(mobile))]
 const LABEL_RECEIVE_ON_CHANGE: u8 = 8;
+#[cfg(not(mobile))]
 const LABEL_RECEIVED_PACKET: u8 = 5;
 
 /// Ports that could plausibly be a DMX widget.
@@ -35,6 +43,7 @@ const LABEL_RECEIVED_PACKET: u8 = 5;
 /// `/dev/cu.*`. The `tty` node blocks on open waiting for carrier detect, which
 /// a DMX widget never asserts — opening it hangs rather than failing, so only
 /// the `cu` node is offered.
+#[cfg(not(mobile))]
 pub fn list_ports() -> Vec<String> {
     serialport::available_ports()
         .map(|ports| {
@@ -47,6 +56,21 @@ pub fn list_ports() -> Vec<String> {
         .unwrap_or_default()
 }
 
+/// Always empty on iOS and Android.
+///
+/// Neither offers a USB serial port a widget could be opened on — iOS would
+/// need an MFi accessory and Android a `UsbManager` permission dance through
+/// JNI — so the `serialport` crate is not a dependency for those targets at
+/// all and there is nothing here to enumerate. The frontend never asks: its
+/// `usb` capability is false on mobile, which is what hides the control. This
+/// returns empty rather than erroring so that anything which does ask gets the
+/// truthful answer, which is that there are no ports.
+#[cfg(mobile)]
+pub fn list_ports() -> Vec<String> {
+    Vec::new()
+}
+
+#[cfg(not(mobile))]
 fn message(label: u8, payload: &[u8]) -> Vec<u8> {
     let mut out = Vec::with_capacity(payload.len() + 5);
     out.push(SOM);
@@ -81,10 +105,27 @@ impl SerialInput {
         self.running.load(Ordering::SeqCst)
     }
 
+    /// Refuses on iOS and Android, where there is no port to open.
+    ///
+    /// Reached only if something calls it anyway — the frontend's `usb`
+    /// capability is false on mobile, so the control that would is not
+    /// rendered. It says why rather than failing as a generic open error,
+    /// because "no such port" would send someone looking for a cable.
+    #[cfg(mobile)]
+    pub fn start<F>(&self, _port: &str, _universe: u16, _on_frame: F) -> Result<(), String>
+    where
+        F: Fn(u16, Vec<u8>) + Send + 'static,
+    {
+        Err("USB DMX input is not available on iOS or Android. Send Art-Net or \
+             sACN to this device's address instead."
+            .into())
+    }
+
     /// Open a widget and stream its DMX input to `on_frame`.
     ///
     /// `universe` is the universe number these frames are attributed to — a
     /// USB widget has no concept of one, so the operator chooses.
+    #[cfg(not(mobile))]
     pub fn start<F>(&self, port: &str, universe: u16, on_frame: F) -> Result<(), String>
     where
         F: Fn(u16, Vec<u8>) + Send + 'static,

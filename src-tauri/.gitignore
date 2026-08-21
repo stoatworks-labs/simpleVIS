@@ -1,0 +1,10 @@
+
+# The generated mobile projects. Both are recreated in full by
+# `tauri ios init` / `tauri android init`, and neither holds anything hand
+# written -- persistent iOS plist keys go in src-tauri/Info.ios.plist, which
+# Tauri merges, precisely so nothing here has to survive.
+#
+# gen/schemas/ is deliberately NOT ignored: it is committed in this repo
+# already, and the mobile variants belong with the desktop ones.
+gen/apple/
+gen/android/

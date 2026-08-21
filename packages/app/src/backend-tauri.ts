@@ -20,12 +20,22 @@ import type {
   UniverseFrame,
 } from './api.js';
 
+// `usb` is false on iOS and Android: neither exposes a USB serial port a
+// Enttec-class DMX interface could be opened on, and the Rust side does not
+// even compile the serialport crate for those targets, so the commands behind
+// this flag are genuinely absent rather than merely unlikely to work.
+//
+// Everything else stays true, and on mobile that is a narrower promise than it
+// looks. Art-Net and unicast sACN work — this codebase binds 0.0.0.0 and never
+// joins a group for Art-Net, so a console pointed at the device's own address
+// reaches it. Multicast sACN and CITP discovery need a MulticastLock on Android
+// and an Apple-approved entitlement on iOS, and have neither yet.
 const capabilities: Capabilities = {
   network: true,
-  usb: true,
+  usb: !__SIMPLEVIS_MOBILE__,
   citp: true,
   filesystem: true,
-  backend: 'Desktop',
+  backend: __SIMPLEVIS_MOBILE__ ? 'Mobile' : 'Desktop',
 };
 
 /** Slots arrive over IPC as a plain number array; the store wants bytes. */

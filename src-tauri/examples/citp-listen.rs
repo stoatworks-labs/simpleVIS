@@ -15,7 +15,7 @@ use std::net::Ipv4Addr;
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
-use simplevis::citp::CitpPeer;
+use simplevis_lib::citp::CitpPeer;
 
 fn main() -> std::io::Result<()> {
     let seconds: u64 = std::env::args()

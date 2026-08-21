@@ -21,7 +21,7 @@ use std::net::{Ipv4Addr, UdpSocket};
 use std::sync::mpsc;
 use std::time::Duration;
 
-use simplevis::net::InputEngine;
+use simplevis_lib::net::InputEngine;
 
 /// Build a valid E1.31 data packet for `universe` with the given slots.
 fn sacn_packet(universe: u16, priority: u8, slots: &[u8]) -> Vec<u8> {

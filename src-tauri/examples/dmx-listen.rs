@@ -20,8 +20,8 @@ use std::net::Ipv4Addr;
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
-use simplevis::citp::CitpPeer;
-use simplevis::net::InputEngine;
+use simplevis_lib::citp::CitpPeer;
+use simplevis_lib::net::InputEngine;
 
 #[derive(Default, Clone, Copy)]
 struct Stat {

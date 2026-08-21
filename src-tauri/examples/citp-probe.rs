@@ -20,7 +20,7 @@ use std::time::{Duration, Instant};
 
 use socket2::{Domain, Protocol, Socket, Type};
 
-use simplevis::protocol::citp::{self, Message};
+use simplevis_lib::protocol::citp::{self, Message};
 
 fn hex(bytes: &[u8]) -> String {
     bytes

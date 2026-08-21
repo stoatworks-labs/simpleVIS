@@ -238,3 +238,40 @@ html[data-hosted] .app {
 }
 .statusbar em { font-style: normal; color: var(--text); font-variant-numeric: tabular-nums; }
 .statusbar__backend { margin-left: auto; }
+
+/* ------------------------------------------------------- narrow screens */
+
+/*
+ * Phones, and anything else too narrow for a 300px sidebar beside a usable
+ * viewport. At 402pt the fixed column takes three quarters of the width and
+ * leaves the visualiser a strip, so below this the two stack: rig on top,
+ * controls underneath in a panel that scrolls on its own.
+ *
+ * `minmax(0, 1fr)` on the viewport row is load-bearing for the same reason it
+ * is in the hosted rules above — the canvas is `height: 100%` and viewer.ts
+ * writes its attribute height, so an auto row lets the two feed each other and
+ * the document grows without bound. Keep the row bounded.
+ *
+ * Landscape is deliberately not covered: a phone on its side is ~874pt wide,
+ * stays above this breakpoint, and the side-by-side layout is the right one
+ * there. `svh` rather than `vh` so the panel does not sit under a browser
+ * chrome bar that is only sometimes present.
+ *
+ * The sidebar comes first in the DOM because that is the reading order on a
+ * desktop; on a phone the rig should be what you see first, hence `order`.
+ */
+@media (max-width: 900px) {
+  .app,
+  html[data-hosted] .app {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) 45svh;
+  }
+
+  .viewport { order: 1; }
+
+  .sidebar {
+    order: 2;
+    border-right: none;
+    border-top: 1px solid var(--line);
+  }
+}

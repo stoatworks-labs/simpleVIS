@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Merged into the generated iOS Info.plist by Tauri, which looks for this
+  filename alongside tauri.conf.json. It lives here rather than in
+  gen/apple/*/Info.plist because gen/ is generated and gitignored, so an edit
+  made there is lost the next time anyone runs `tauri ios init`.
+
+  Receiving needs consent too. The local network prompt is not only about
+  making outbound connections — binding a socket and taking delivery of
+  Art-Net on 6454 or sACN on 5568 is just as much local network access, and
+  since iOS 14 it needs the user's permission. Without this key the system has
+  no string to put in the prompt, so it never asks, and the sockets bind
+  successfully and then simply never receive a packet. That failure looks
+  exactly like a console pointed at the wrong address, which is the last place
+  anyone would think to stop looking.
+
+  Multicast is a separate question this key does not answer. Joining a group —
+  which sACN's per-universe subscriptions and CITP discovery both do — needs
+  com.apple.developer.networking.multicast, an entitlement Apple grants by
+  application. Until that exists, unicast Art-Net and unicast sACN work and the
+  multicast paths do not; net.rs deliberately treats a failed join as
+  non-fatal, so the app will look like it is working and receive nothing.
+-->
+<plist version="1.0">
+  <dict>
+    <key>NSLocalNetworkUsageDescription</key>
+    <string>simpleVIS receives Art-Net and sACN lighting data from a console on your local network, so it can show your rig live. Nothing is sent out and nothing leaves the device.</string>
+  </dict>
+</plist>
