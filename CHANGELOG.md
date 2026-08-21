@@ -1,5 +1,24 @@
 # Changelog
 
+## v0.4.0 — 2026-08-21
+
+### Fixed
+- **The desktop app received no Art-Net or sACN once it was double-clicked.**
+  Since macOS 15 an app must declare why it uses the local network, and on 26
+  the enforcement is thorough: without `NSLocalNetworkUsageDescription` a
+  GUI-launched app is denied LAN traffic silently — so the rig sat dark with
+  nothing to explain it. The key was already in `Info.ios.plist`, which does not
+  feed the macOS bundle; there is now a macOS `Info.plist` beside it. Nothing
+  caught it in development because a process started from a terminal inherits
+  the terminal's own permission.
+
+### Added
+- iOS and Android builds.
+
+*(v0.3.0 shipped without a changelog entry; this file skips from v0.2.0 to
+here.)*
+
+
 ## v0.2.0 — 2026-08-02
 
 ### CITP

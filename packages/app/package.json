@@ -1,6 +1,6 @@
 {
   "name": "@simplevis/app",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "simpleVIS user interface. One React app serving both the Tauri desktop build and the hosted static viewer.",
   "license": "MIT",
   "type": "module",

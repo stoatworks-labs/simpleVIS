@@ -1,6 +1,6 @@
 [package]
 name = "simplevis"
-version = "0.3.0"
+version = "0.4.0"
 description = "Lightweight real-time lighting visualiser"
 authors = ["Allan Sargeant"]
 license = "MIT"
