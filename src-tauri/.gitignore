@@ -7,4 +7,10 @@
 # gen/schemas/ is deliberately NOT ignored: it is committed in this repo
 # already, and the mobile variants belong with the desktop ones.
 gen/apple/
-gen/android/
+
+# gen/android/ is deliberately NOT ignored. MainActivity.kt is the one file
+# Tauri puts outside generated/, and it carries the window-inset handling that
+# keeps the page out from under Android's system bars -- there is no
+# configuration field for that, so the source is the only place it can live.
+# Tauri ships .gitignore files inside the directory that exclude build output
+# and jniLibs. `tauri android init` overwrites MainActivity.kt.
