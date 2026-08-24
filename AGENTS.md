@@ -335,3 +335,10 @@ typecheck clean):
 - **`UnMapper`** — the fleet's wgpu precedent, and the source of the
   wgpu/egui version-skew and GPU-fixture traps if the renderer ever goes native.
 - **`av-launcher`** — the Tauri v2 shell, already building green on mac/win/linux.
+
+## Notes
+
+`docs/NOTES.md` carries this repo's working notes — current status, decisions
+already made, and the traps that have actually bitten. Read it before changing
+anything non-obvious. Cross-cutting fleet knowledge lives in
+[fleet-notes](https://github.com/stoatworks-labs/fleet-notes).
