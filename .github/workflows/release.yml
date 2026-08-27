@@ -120,7 +120,7 @@ jobs:
       - run: npm ci
       # The hosted build deliberately omits the Tauri backend entirely.
       - run: npm run build --workspace=@simplevis/app
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: simplevis-hosted
           path: packages/app/dist
