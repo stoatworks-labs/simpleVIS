@@ -105,12 +105,15 @@ packages/core/     pure TS — no DOM, no WebGL, no Node. Runs in a tab,
   src/gdtf/        description.xml + DMX mode resolution
   src/dmx/         addressing, universe store, evaluation, demo source
   src/patch.ts     joins scene placement to channel meaning
+  src/pixelmap.ts  a wall's GeometryReference instances -> texture coordinates
 
 packages/render/   three.js. Browser-only.
   src/viewer.ts    the three render passes
   src/beams.ts     instanced volumetric cones
   src/glow.ts      instanced billboards for low-flux emitters
   src/fixtures.ts  GDTF geometry tree -> articulated three.js hierarchy
+  src/video.ts     decimated frames and the wall sampler
+  src/detail.ts    one quality number -> the four costs it stands for
 
 packages/app/      React UI. One codebase, two backends.
   src/api.ts       the capabilities contract
@@ -217,6 +220,32 @@ draws no fixture body.
 (`ColorSub_C/M/Y`) with a CTO in kelvin. The LED Wall is additive RGB. Both must
 work.
 
+**A fixture's local axes do not know which way is up. Only its placement
+does.** This cost a rendered frame to find out, and it is the trap the whole
+wall-video path turns on. The Demostage's Generic LED Wall is authored **flat
+in its own XY plane** — local Z is constant at -0.047 for all 100 pixels — and
+the MVR stands it up with a placement whose local **+Y maps to world -Z**. So
+the pixel with the *largest* local Y is the *bottom* of the wall as hung.
+`pixelmap.ts` therefore finds the surface in local space, where the grid is
+regular, but decides **which of its two axes runs down the picture in world
+space, against world up**. Deriving that from the local axis alone plays every
+wall in the show upside down — subtle enough on abstract content to pass a
+glance, obvious the moment anything has a top.
+
+The left-right sense is *not* derivable and is not attempted: nothing in an MVR
+says which face of a wall is its front, so mirrored and not-mirrored are
+indistinguishable from the file. It follows the fixture's own axis order.
+
+**Reading a stacked wall's orientation off a screenshot does not work**, which
+is how the same "bug" was chased twice after it was already fixed. Eight walls
+stacked in a tower repeat their pattern every ten rows, and where a wall
+*starts* is not visible — a test clip banded top to bottom looks identical
+flipped, because the crop boundary is unknown. What settles it is projecting
+the physically highest and lowest emitter of each wall through the app's own
+camera to screen coordinates and sampling the PNG at exactly those points
+(15/16 walls lit at v=0 with a clip white across its top quarter; the sixteenth
+sample landed behind a hanging fixture). Do that, not eye-to-crop.
+
 **A fixture can have sub-emitters.** The Prolights Sunrise2IP splits into a root
 group plus `Pixel_left` and `Pixel_right`, each with its own addressable dimmer
 behind the fixture's master. Sub-emitters inherit the root's pose and multiply
@@ -267,6 +296,28 @@ surface lands near black whatever colour it is. Emissive is added straight to
 outgoing radiance and is exactly the colour asked for regardless of lighting.
 The GridHelper is skipped (it is already edges, and at the wireframe grey a
 60x60 grid out-shouts the rig standing on it).
+
+**Video on the walls is decimated before it is sampled, never after.** A
+Generic LED Wall 10x10 is a hundred pixels; filling it from a 1920x1080 frame
+reads 0.005% of the data and pays for all of it. `video.ts` therefore scales
+every source into a 128px-wide canvas and samples *that* — which is also what
+makes NDI or Syphon viable later, because a native source can decimate in Rust
+and hand the webview a few KB rather than a quarter of a gigabyte a second.
+Sampling is nearest-neighbour on purpose: an LED pixel is a discrete emitter,
+so filtering between source pixels invents detail the wall cannot show.
+
+**Canvas bytes are sRGB and `Color.setRGB` wants linear.** Dividing a frame's
+bytes by 255 does not throw, it just makes every video wall pale and flat in a
+way that reads as an exposure problem. `video.ts` decodes through a 256-entry
+table.
+
+**Video replaces a pixel's colour but never its intensity.** Replaces, because
+a wall fed by a media server should show the media server's picture rather than
+that picture tinted by whatever the desk has in the wall's RGB channels. Never
+the intensity, because the fixture's own dimmer is what a blackout acts
+through — the same rule sub-emitters already follow. The consequence worth
+knowing: with no desk connected and no demo look, a wall's dimmer is at zero,
+so video plays on a black wall and looks broken. It is not.
 
 **Beams are gain-corrected, not physical.** The integral of 1/d² through a few
 metres of haze is ~0.01, which is black. `BEAM_GAIN` puts it in range so
@@ -328,6 +379,20 @@ typecheck clean):
   with a real peer is verified against Capture 2026 — but Capture is a
   `Visualizer`, so it sends no `ChBk` and no `Ptch`. **MSEX and CAEX are not
   implemented**, so simpleVIS cannot stream its viewport back to a desk.
+- **NDI, Syphon and Spout are not implemented.** Wall video exists, but only
+  from browser-native sources — a local file and `getDisplayMedia` screen
+  capture — both of which work in *either* build. The two protocols split the
+  same way everything else does: NDI is UDP with mDNS discovery and Syphon is
+  macOS inter-process texture sharing, so neither can exist in a tab. Two
+  things to know before starting them. **NDI's SDK is proprietary** (Vizrt
+  EULA), so an MIT public repo wants dynamic loading of a runtime the user
+  installs separately — the pattern the `ndi-sdk` crate and DistroAV both
+  use — plus the NDI mark on the About screen. **Syphon cannot be zero-copy
+  here**: its whole point is sharing an IOSurface straight into Metal, and this
+  renders WebGL inside a WKWebView, where no supported path binds an external
+  IOSurface as a texture. It would have to read back to CPU and go through the
+  same decimation as everything else, which is fine at wall-pixel counts but
+  should not be described as Syphon's fast path.
 - **Fixture bodies are proxy boxes**, sized from real GDTF `Model` dimensions.
   The `.3ds` meshes inside a GDTF are not loaded.
 - **Windows and Linux have never been built**, only macOS arm64.

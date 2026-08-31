@@ -7,7 +7,7 @@ import {
   UniverseStore,
   type Patch,
 } from '@simplevis/core';
-import { loadSceneObjects, Viewer } from '@simplevis/render';
+import { ElementVideoSource, loadSceneObjects, Viewer } from '@simplevis/render';
 import { getApi, type SourceStatus } from './api.js';
 import { Sidebar } from './components/Sidebar.js';
 import { DropZone } from './components/DropZone.js';
@@ -39,6 +39,8 @@ export function App() {
   const [beamCount, setBeamCount] = useState(0);
   const [glowCount, setGlowCount] = useState(0);
   const [drawCalls, setDrawCalls] = useState(0);
+  const [videoPixels, setVideoPixels] = useState(0);
+  const [videoLabel, setVideoLabel] = useState<string | null>(null);
 
   /* ---------------------------------------------------------- the viewer */
 
@@ -79,6 +81,7 @@ export function App() {
         setBeamCount(viewer.activeBeamCount);
         setGlowCount(viewer.activeGlowCount);
         setDrawCalls(viewer.drawCalls);
+        setVideoPixels(viewer.videoPixelCount);
         frames = 0;
         acc = 0;
       }
@@ -179,6 +182,42 @@ export function App() {
     [importMvrBytes],
   );
 
+  /* ---------------------------------------------------------- wall video */
+
+  const stopVideo = useCallback(() => {
+    viewerRef.current?.setWallVideo(null);
+    setVideoLabel(null);
+    setVideoPixels(0);
+  }, []);
+
+  const playVideoFile = useCallback((file: File) => {
+    // The viewer disposes whatever was playing before, so a second file does
+    // not leave the first one decoding in the background.
+    viewerRef.current?.setWallVideo(ElementVideoSource.fromFile(file));
+    setVideoLabel(file.name);
+  }, []);
+
+  const captureScreen = useCallback(async () => {
+    setError(null);
+    try {
+      const stream = await navigator.mediaDevices.getDisplayMedia({
+        video: true,
+        audio: false,
+      });
+      const label = stream.getVideoTracks()[0]?.label || 'Screen capture';
+      viewerRef.current?.setWallVideo(ElementVideoSource.fromStream(label, stream));
+      setVideoLabel(label);
+      // The browser's own "stop sharing" control ends the track without going
+      // anywhere near this UI, so listen for it or the panel keeps claiming a
+      // feed is playing on walls that have gone black.
+      stream.getVideoTracks()[0]?.addEventListener('ended', () => stopVideo());
+    } catch (err) {
+      // A refused picker is a choice, not a failure; anything else is worth
+      // saying out loud.
+      if ((err as Error).name !== 'NotAllowedError') setError((err as Error).message);
+    }
+  }, [stopVideo]);
+
   return (
     <div className="app">
       <Sidebar
@@ -195,6 +234,10 @@ export function App() {
         onDetailChange={setDetail}
         wireframe={wireframe}
         onWireframeChange={setWireframe}
+        videoLabel={videoLabel}
+        onVideoFile={playVideoFile}
+        onCaptureScreen={captureScreen}
+        onVideoStop={stopVideo}
         onFrameRig={() => viewerRef.current?.frameRig()}
         onImport={importMvr}
         onLoadExample={loadExample}
@@ -215,6 +258,7 @@ export function App() {
           draws={drawCalls}
           fixtures={load?.patch.fixtures.length ?? 0}
           universes={load?.patch.universes.length ?? 0}
+          videoPixels={videoPixels}
           backend={api.capabilities.backend}
         />
       </main>

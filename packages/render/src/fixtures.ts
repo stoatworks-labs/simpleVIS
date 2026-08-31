@@ -24,9 +24,10 @@ import {
   Quaternion,
   Vector3,
 } from 'three';
-import type { BeamData, EmitterState, PatchedFixture } from '@simplevis/core';
+import { buildPixelMap, type BeamData, type EmitterState, type PatchedFixture, type PixelUv } from '@simplevis/core';
 import type { BeamInstance } from './beams.js';
 import type { GlowInstance } from './glow.js';
+import type { SampledColor } from './video.js';
 
 /**
  * One material and one geometry for every fixture body in the show.
@@ -53,6 +54,12 @@ interface EmitterNode {
   /** Node to rotate for pan, if this fixture pans. */
   readonly panNode?: Object3D;
   readonly tiltNode?: Object3D;
+  /**
+   * Where this emitter sits on its fixture's pixel surface, when the fixture
+   * *is* a surface. `undefined` for anything with a single emitter, which is
+   * what keeps a moving head from taking a video feed's colour.
+   */
+  readonly uv?: PixelUv;
 }
 
 export interface FixtureNode {
@@ -122,6 +129,10 @@ export function buildFixture(patched: PatchedFixture): FixtureNode {
     return found;
   })();
 
+  // Computed once per fixture, not once per emitter: a wall has a hundred
+  // emitters and the map is derived from all of them together.
+  const pixels = buildPixelMap(patched);
+
   for (const instance of patched.instances) {
     const channels = patched.channels.filter((c) => c.instance === instance.name);
     const panName = channels.find((c) => c.attribute === 'Pan')?.geometry;
@@ -151,6 +162,7 @@ export function buildFixture(patched: PatchedFixture): FixtureNode {
       beam: beamGeometry,
       panNode: panName ? byName.get(panName) : undefined,
       tiltNode: tiltName ? byName.get(tiltName) : undefined,
+      uv: pixels?.get(instance.name),
     });
   }
 
@@ -177,7 +189,17 @@ export function applyState(
   emitterStates: readonly EmitterState[],
   out: BeamInstance[],
   glows: GlowInstance[],
-  options: { range: number; minIntensity: number; minFlux: number; glowSize: number },
+  options: {
+    range: number;
+    minIntensity: number;
+    minFlux: number;
+    glowSize: number;
+    /**
+     * Colour for a pixel-mapped emitter, or `null` when no video is playing.
+     * The returned object is reused between calls, so read it before the next.
+     */
+    sampleVideo?: (uv: PixelUv) => SampledColor | null;
+  },
 ): void {
   // Index once. A 100-pixel LED wall has 100 emitters and 100 states, so a
   // linear search per emitter is 10,000 comparisons per wall per frame — and
@@ -222,14 +244,25 @@ export function applyState(
     // looks like.
     emitter.node.matrixWorld.decompose(_pos, _quat, _scale);
 
+    // Video *replaces* the emitted colour but never the intensity.
+    //
+    // Replaces, because a wall fed by a media server should show the media
+    // server's picture, not that picture tinted by whatever the desk happens
+    // to have in the wall's RGB channels. Never the intensity, because the
+    // fixture's own dimmer is what a blackout acts through — the same rule
+    // sub-emitters already follow, and without it the walls would burn through
+    // a blackout with the rest of the rig dark.
+    const video = emitter.uv && options.sampleVideo ? options.sampleVideo(emitter.uv) : null;
+    const colour = video ?? state.color;
+
     const flux = emitter.beam?.luminousFlux ?? 0;
     if (flux > 0 && flux < options.minFlux) {
       glows.push({
         position: _pos.clone(),
         color: {
-          r: state.color.r * intensity,
-          g: state.color.g * intensity,
-          b: state.color.b * intensity,
+          r: colour.r * intensity,
+          g: colour.g * intensity,
+          b: colour.b * intensity,
         },
         size: options.glowSize,
       });
@@ -248,9 +281,9 @@ export function applyState(
       origin: _pos.clone(),
       direction: _dir.clone(),
       color: {
-        r: state.color.r * intensity * gain,
-        g: state.color.g * intensity * gain,
-        b: state.color.b * intensity * gain,
+        r: colour.r * intensity * gain,
+        g: colour.g * intensity * gain,
+        b: colour.b * intensity * gain,
       },
       beamAngle: state.beamAngle,
       fieldAngle: Math.max(state.beamAngle, state.fieldAngle),

@@ -3,6 +3,29 @@
 ## Unreleased
 
 ### Added
+- **Video on LED walls.** Any fixture whose GDTF expands into more than one
+  addressable emitter is treated as a video surface, and takes its colour per
+  pixel from a feed: a local video file, or a captured screen or window. Both
+  sources are browser-native, so this works in the hosted build as well as the
+  desktop one.
+
+  The wall's own `GeometryReference` instances *are* the raster — the Generic
+  LED Wall 10x10's hundred instances resolve to a full 10x10 grid of texture
+  coordinates, derived from their positions rather than their document order,
+  which a GDTF gives no guarantees about.
+
+  Frames are decimated to a thumbnail before they are sampled, never after.
+  That is what keeps 1,618 pixels costing nothing, and it is the design a
+  native NDI or Syphon source would plug into: decimate where the frame already
+  lives and hand over a few KB.
+
+  Video replaces a pixel's colour but never its intensity, so the fixture's own
+  dimmer still gates it and a blackout blacks the walls out with the rest of
+  the rig.
+
+  **NDI, Syphon and Spout are not implemented** — see `AGENTS.md` for what each
+  would need, including NDI's proprietary SDK and the fact that Syphon cannot
+  be zero-copy into a WebGL-in-WKWebView renderer.
 - **A Quality panel: "Wireframe only" and a Detail slider.** Wireframe draws the
   rig as edges with no beams and no haze, in one render pass instead of three —
   for finding a fixture in a crowded rig, and for a machine that cannot carry
@@ -16,6 +39,15 @@
   stops short of full-resolution beams: at 1.0 beam scale and a 2x pixel ratio
   the beam pass is sixteen times the default's fragments, which on MA's
   Demostage wedged the page rather than merely slowing it.
+
+### Fixed
+- **Importing a second MVR drew both plots on top of each other.** `setPatch`
+  replaced the fixtures, but the set geometry — truss, deck, soft goods — was
+  added to the scene and never removed, so every import stacked another copy.
+  Found while measuring the wall-video change: the draw count climbed by
+  exactly the set-mesh count on each import, with nothing visibly wrong until
+  two rigs' trusses overlapped. Three imports of the Demostage now hold at 514
+  draws where they went 514, 583, 652.
 
 ### Changed
 - The haze slider is now labelled **Haze density**, and both Look sliders say

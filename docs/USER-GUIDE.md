@@ -81,6 +81,37 @@ stream its viewport back to the desk.
 
 ---
 
+## Video on LED walls
+
+Any fixture whose GDTF expands into **more than one addressable emitter** is treated as a video
+surface — an LED wall, a pixel bar, a two-cell batten. The sidebar says how many the loaded rig
+has and how many pixels that comes to, so a rig with none says so rather than appearing to
+ignore you.
+
+| Source | Desktop | Hosted |
+|---|---|---|
+| **A video file** | yes | yes |
+| **Screen or window capture** | no — WKWebView has no `getDisplayMedia` | yes |
+| **NDI, Syphon, Spout** | not implemented | impossible — a browser has neither UDP nor macOS IPC |
+
+**Every pixel-mapped fixture plays the whole frame.** Sixteen walls show sixteen copies, not
+sixteen tiles of one picture.
+
+> **Video replaces the pixel's colour, not its dimmer.** A blackout blacks the walls out with
+> everything else — which also means that with no desk connected and the demo look switched off,
+> the walls' dimmers are at zero and video plays on a black wall. That is the fixture doing what
+> it is told, not a broken feed.
+
+The picture is placed from the wall's geometry as it hangs, so content is upright in the room
+whatever attitude the wall is at. Left-right is *not* derivable — nothing in an MVR says which
+face of a wall is its front — so a mirrored wall would need a per-fixture flip, which does not
+exist yet.
+
+**Nothing leaves the machine.** A file is read through the page, and a captured stream is never
+sent anywhere.
+
+---
+
 ## Look and quality
 
 Two panels in the sidebar, and the split between them is deliberate: **Look** changes what the
@@ -118,6 +149,9 @@ to spare, not as the setting to leave it on.
 | **Fixture renders but doesn't move** | Check the DMX mode the MVR declared matches what the desk is patched to — a mode is a template, not a footprint. |
 | **Frame rate is poor on a big rig** | Pull **Detail** down — it cuts raymarch steps, beam-buffer resolution, cone count and pixel ratio together. **Wireframe only** is the floor. |
 | **No beams at all, and the rig is all edges** | **Wireframe only** is on. It disables the volumetrics by design, and greys out the Look sliders while it is. |
+| **Video is playing but the walls are black** | Their dimmer is at zero. Video sets colour, not intensity — switch the demo look on, or send levels. |
+| **"Nothing in this rig is pixel-mapped"** | Correct for a rig with no wall or pixel bar. Video needs a fixture whose GDTF gives it more than one addressable emitter. |
+| **No "capture a screen or window" button** | The desktop build's webview has no `getDisplayMedia`. Play a file, or use the hosted build for capture. |
 
 ---
 

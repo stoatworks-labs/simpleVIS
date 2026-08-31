@@ -47,6 +47,7 @@ import { GlowSystem, type GlowInstance } from './glow.js';
 import { applyState, buildFixture, type FixtureNode } from './fixtures.js';
 import { compositeFragmentShader, compositeVertexShader } from './beams.glsl.js';
 import { detailSettings } from './detail.js';
+import { sampleWall, type SampledColor, type WallVideoSource } from './video.js';
 
 /**
  * What a wireframed material emits.
@@ -117,6 +118,11 @@ export class Viewer {
   private glowBuffer: GlowInstance[] = [];
   private options: Required<ViewerOptions>;
   private deck: Mesh | null = null;
+  private sceneObjects: Object3D[] = [];
+  private video: WallVideoSource | null = null;
+  /** Reused across every pixel of every wall, so sampling allocates nothing. */
+  private readonly sampled: SampledColor = { r: 0, g: 0, b: 0 };
+  private videoPixels = 0;
 
   constructor(canvas: HTMLCanvasElement, options: ViewerOptions = {}) {
     const detail = options.detail ?? 0.5;
@@ -284,12 +290,25 @@ export class Viewer {
   /** Add already-loaded set geometry (GLB from the MVR) to the scene. */
   addSceneObject(object: Object3D): void {
     this.rigRoot.add(object);
+    this.sceneObjects.push(object);
     this.applyWireframe();
   }
 
+  /**
+   * Drop the previous rig — fixtures **and** set geometry.
+   *
+   * The set has to go too, and did not before: `setPatch` replaced the
+   * fixtures while `addSceneObject`'s truss, deck and soft goods stayed in the
+   * scene forever, so importing a second MVR drew both plots on top of each
+   * other. It reads as a draw-call number that climbs 69 at a time — the
+   * Demostage's set-mesh count — with nothing visibly wrong until two rigs'
+   * trusses overlap.
+   */
   private clearRig(): void {
     for (const fixture of this.fixtures) this.rigRoot.remove(fixture.root);
     this.fixtures = [];
+    for (const object of this.sceneObjects) this.rigRoot.remove(object);
+    this.sceneObjects = [];
   }
 
   /** Point the camera at the whole rig. */
@@ -313,11 +332,46 @@ export class Viewer {
     this.controls.update();
   }
 
+  /**
+   * Play a video feed on every pixel-mapped fixture in the rig.
+   *
+   * Pass `null` to stop. The previous source is disposed, which stops a screen
+   * capture's tracks and hands the browser's "you are sharing" banner back —
+   * leaking that would be a privacy bug, not an untidiness.
+   */
+  setWallVideo(source: WallVideoSource | null): void {
+    if (this.video && this.video !== source) this.video.dispose();
+    this.video = source;
+    if (!source) this.videoPixels = 0;
+  }
+
+  /** The feed currently playing on the walls, if any. */
+  get wallVideo(): WallVideoSource | null {
+    return this.video;
+  }
+
+  /** Emitters that took their colour from video on the last update. */
+  get videoPixelCount(): number {
+    return this.videoPixels;
+  }
+
   /** Feed a frame of evaluated fixture state. */
   update(states: readonly FixtureState[]): void {
     this.beamBuffer.length = 0;
     this.glowBuffer.length = 0;
     const byUuid = new Map(states.map((s) => [s.uuid, s]));
+
+    // Pulled once per frame, not once per pixel: a source decodes and reads
+    // back a frame, and doing that 1,600 times would cost more than the entire
+    // rest of the renderer.
+    const frame = this.video?.frame() ?? null;
+    let pixels = 0;
+    const sampleVideo = frame
+      ? (uv: Parameters<typeof sampleWall>[1]) => {
+          pixels++;
+          return sampleWall(frame, uv, this.sampled);
+        }
+      : undefined;
 
     for (const fixture of this.fixtures) {
       const state = byUuid.get(fixture.patched.fixture.uuid);
@@ -327,8 +381,10 @@ export class Viewer {
         minIntensity: this.options.minIntensity,
         minFlux: this.options.minFlux,
         glowSize: this.options.glowSize,
+        sampleVideo,
       });
     }
+    this.videoPixels = pixels;
 
     // Wireframe draws neither, and dropping them here rather than at draw time
     // means the status bar reports 0 beams and 0 glows — which is the truth,
@@ -469,6 +525,8 @@ export class Viewer {
   }
 
   dispose(): void {
+    this.video?.dispose();
+    this.video = null;
     this.beams.dispose();
     this.glows.dispose();
     this.target.dispose();

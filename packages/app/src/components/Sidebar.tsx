@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
-import type { Patch } from '@simplevis/core';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { buildPixelMap, type Patch } from '@simplevis/core';
 import { detailSettings } from '@simplevis/render';
 import type { CitpPeer, NetworkInterface, SimpleVisApi, SourceStatus } from '../api.js';
 
@@ -17,6 +17,11 @@ interface Props {
   onDetailChange: (value: number) => void;
   wireframe: boolean;
   onWireframeChange: (value: boolean) => void;
+  /** Label of the feed currently on the walls, or null when nothing plays. */
+  videoLabel: string | null;
+  onVideoFile: (file: File) => void;
+  onCaptureScreen: () => void;
+  onVideoStop: () => void;
   onFrameRig: () => void;
   onImport: (file: File) => void;
   onLoadExample: () => void;
@@ -33,6 +38,32 @@ export function Sidebar(props: Props) {
   const [citpOn, setCitpOn] = useState(false);
   const [citpPeers, setCitpPeers] = useState<readonly CitpPeer[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
+  const videoFileRef = useRef<HTMLInputElement>(null);
+
+  /**
+   * How much of the rig can actually take a video feed.
+   *
+   * Worth counting and showing. "Play a file" on a rig with no pixel-mapped
+   * fixture would appear to do nothing at all, and the honest reason — this
+   * MVR has no wall in it — is not something a user can see from the viewport.
+   */
+  const pixelSurfaces = useMemo(() => {
+    let fixtures = 0;
+    let pixels = 0;
+    for (const f of load?.patch.fixtures ?? []) {
+      const map = buildPixelMap(f);
+      if (!map) continue;
+      fixtures++;
+      pixels += map.size;
+    }
+    return { fixtures, pixels };
+  }, [load]);
+
+  // Screen and window capture is a DOM capability, not a backend one, so it is
+  // feature-detected rather than read off `api.capabilities`. WKWebView, which
+  // is what the desktop build renders in, does not implement it.
+  const canCaptureScreen =
+    typeof navigator !== 'undefined' && !!navigator.mediaDevices?.getDisplayMedia;
 
   useEffect(() => {
     if (!api.capabilities.network) return;
@@ -264,6 +295,65 @@ export function Sidebar(props: Props) {
           </ul>
         )}
       </section>
+
+      {/* Video on the pixel-mapped fixtures. Hidden until a rig is loaded,
+          because until then there is nothing for a feed to play on. */}
+      {load && (
+        <section className="panel">
+          <h2>Wall video</h2>
+          {pixelSurfaces.fixtures === 0 ? (
+            <p className="hint hint--muted">
+              Nothing in this rig is pixel-mapped. Video plays on fixtures whose
+              GDTF expands into one addressable emitter per pixel — an LED wall,
+              a pixel bar — and this MVR has none.
+            </p>
+          ) : (
+            <>
+              <p className="hint">
+                {pixelSurfaces.fixtures} pixel-mapped{' '}
+                {pixelSurfaces.fixtures === 1 ? 'fixture' : 'fixtures'},{' '}
+                {pixelSurfaces.pixels} pixels. Each one plays the whole frame.
+              </p>
+              <button className="button" onClick={() => videoFileRef.current?.click()}>
+                Play a video file…
+              </button>
+              <input
+                ref={videoFileRef}
+                type="file"
+                accept="video/*"
+                hidden
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) props.onVideoFile(file);
+                  e.target.value = '';
+                }}
+              />
+              {canCaptureScreen ? (
+                <button className="button" onClick={props.onCaptureScreen}>
+                  Capture a screen or window…
+                </button>
+              ) : (
+                <p className="hint hint--muted">
+                  Screen capture needs `getDisplayMedia`, which this webview does
+                  not implement. A video file works either way.
+                </p>
+              )}
+              {props.videoLabel && (
+                <>
+                  <p className="hint" title={props.videoLabel}>
+                    Playing <strong>{props.videoLabel}</strong>
+                  </p>
+                  <button className="button" onClick={props.onVideoStop}>Stop video</button>
+                </>
+              )}
+              <p className="hint hint--muted">
+                Video replaces the pixel's colour; the fixture's own dimmer still
+                applies, so a blackout blacks the walls out with everything else.
+              </p>
+            </>
+          )}
+        </section>
+      )}
 
       <section className="panel">
         <h2>Look</h2>
