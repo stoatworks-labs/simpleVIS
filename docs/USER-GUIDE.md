@@ -81,6 +81,28 @@ stream its viewport back to the desk.
 
 ---
 
+## Look and quality
+
+Two panels in the sidebar, and the split between them is deliberate: **Look** changes what the
+rig looks like, **Quality** changes what a frame costs.
+
+| Control | What it does |
+|---|---|
+| **Haze density** | How much the air scatters, 0–1. At 0 the air is clean and a beam is invisible until it lands on something; at 1 the room is thick. |
+| **Exposure** | Overall brightness of the beam accumulation. The composite rolls off at the top, so overlapping beams soften rather than clipping to flat white. |
+| **Wireframe only** | Edges, no beams, no haze — one render pass instead of three. For finding a fixture in a crowded rig, and for a machine that cannot carry the volumetrics. |
+| **Detail** | One slider over the four things that decide the cost of a frame: raymarch steps, beam-buffer resolution, the cap on volumetric cones, and pixel ratio. The panel spells out what the current position resolves to. |
+
+**Detail sits at Medium by default, and Medium is the tuning the renderer was measured at** — on
+a 119-fixture, 1,721-emitter show it runs at full frame rate there. Minimum roughly doubles the
+headroom on a tired GPU; Maximum is a *lot* more expensive and is meant for a machine with a GPU
+to spare, not as the setting to leave it on.
+
+> **Nothing here changes the numbers.** These are rendering costs, not lighting values — the
+> levels, angles and colours the desk sends are evaluated identically at every setting.
+
+---
+
 ## Troubleshooting
 
 | Symptom | Cause |
@@ -94,6 +116,8 @@ stream its viewport back to the desk.
 | **CITP peer found but no levels** | The peer may be a consumer rather than a console — a visualiser sends neither levels nor patch. |
 | **Desk can't see simpleVIS's viewport** | Not implemented. MSEX/CAEX viewport streaming is out of scope for now. |
 | **Fixture renders but doesn't move** | Check the DMX mode the MVR declared matches what the desk is patched to — a mode is a template, not a footprint. |
+| **Frame rate is poor on a big rig** | Pull **Detail** down — it cuts raymarch steps, beam-buffer resolution, cone count and pixel ratio together. **Wireframe only** is the floor. |
+| **No beams at all, and the rig is all edges** | **Wireframe only** is on. It disables the volumetrics by design, and greys out the Look sliders while it is. |
 
 ---
 

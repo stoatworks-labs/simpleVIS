@@ -46,6 +46,19 @@ import { BeamSystem, type BeamInstance } from './beams.js';
 import { GlowSystem, type GlowInstance } from './glow.js';
 import { applyState, buildFixture, type FixtureNode } from './fixtures.js';
 import { compositeFragmentShader, compositeVertexShader } from './beams.glsl.js';
+import { detailSettings } from './detail.js';
+
+/**
+ * What a wireframed material emits.
+ *
+ * Emissive rather than albedo, deliberately. This scene is lit at 0.12 ambient
+ * because the beams are supposed to be the light in it, and a diffuse surface
+ * under that much ambient lands near black whatever colour it is — which is
+ * how the first attempt at this produced a wireframe nobody could see. Emissive
+ * is added straight to the outgoing radiance, so a wireframe is exactly this
+ * colour no matter what the lighting is doing.
+ */
+const WIREFRAME_EMISSIVE = 0x8ea0c0;
 
 export interface ViewerOptions {
   haze?: number;
@@ -68,6 +81,18 @@ export interface ViewerOptions {
   /** Billboard radius for low-flux emitters, metres. */
   glowSize?: number;
   showFloor?: boolean;
+  /**
+   * One knob for the cost of a frame, 0..1. Resolves to `steps`, `beamScale`,
+   * `maxBeams` and the device pixel ratio via {@link detailSettings}; any of
+   * those passed explicitly wins over what it derives.
+   */
+  detail?: number;
+  /**
+   * Draw the scene as edges only, with no beams and no glows. A navigation and
+   * diagnosis mode, not a look: it skips the whole volumetric half of the
+   * renderer, so it runs on anything.
+   */
+  wireframe?: boolean;
 }
 
 export class Viewer {
@@ -91,23 +116,28 @@ export class Viewer {
   private beamBuffer: BeamInstance[] = [];
   private glowBuffer: GlowInstance[] = [];
   private options: Required<ViewerOptions>;
+  private deck: Mesh | null = null;
 
   constructor(canvas: HTMLCanvasElement, options: ViewerOptions = {}) {
+    const detail = options.detail ?? 0.5;
+    const derived = detailSettings(detail);
     this.options = {
       haze: options.haze ?? 0.28,
       exposure: options.exposure ?? 1,
-      steps: options.steps ?? 48,
+      steps: options.steps ?? derived.steps,
       beamRange: options.beamRange ?? 30,
       minIntensity: options.minIntensity ?? 0.002,
       minFlux: options.minFlux ?? 300,
-      maxBeams: options.maxBeams ?? 400,
-      beamScale: options.beamScale ?? 0.5,
+      maxBeams: options.maxBeams ?? derived.maxBeams,
+      beamScale: options.beamScale ?? derived.beamScale,
       glowSize: options.glowSize ?? 0.09,
       showFloor: options.showFloor ?? true,
+      detail,
+      wireframe: options.wireframe ?? false,
     };
 
     this.renderer = new WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
-    this.renderer.setPixelRatio(Math.min(2, globalThis.devicePixelRatio ?? 1));
+    this.renderer.setPixelRatio(this.pixelRatioFor(derived.pixelRatio));
     // Beams are additive HDR-ish accumulations; tone mapping would crush the
     // difference between a fixture at 40% and one at full.
     this.renderer.toneMapping = NoToneMapping;
@@ -174,7 +204,51 @@ export class Viewer {
     quad.frustumCulled = false;
     this.compositeScene.add(quad);
 
+    this.applyWireframe();
     this.resize();
+  }
+
+  /**
+   * Push the wireframe flag onto every material in the scene.
+   *
+   * Re-applied whenever geometry arrives, not just when the flag is toggled:
+   * the rig and the MVR's set are both added long after construction, so a
+   * single pass at toggle time would be quietly undone by the next import.
+   *
+   * The glows are excluded and hidden outright — they are additive billboards
+   * standing in for light, not geometry, and a wireframe quad says nothing.
+   */
+  private applyWireframe(): void {
+    const on = this.options.wireframe;
+    this.glows.mesh.visible = !on;
+    if (this.deck) this.deck.visible = !on;
+
+    this.scene.traverse((object) => {
+      if (object === this.glows.mesh) return;
+      const material = (object as Mesh).material;
+      if (!material) return;
+      for (const m of Array.isArray(material) ? material : [material]) {
+        // GridHelper draws lines, whose material has neither `wireframe` nor
+        // `emissive`. It is skipped entirely: it is already edges, and lit to
+        // the wireframe colour a 60x60 grid would out-shout the rig on it.
+        if (!('wireframe' in m)) continue;
+        const standard = m as MeshStandardMaterial;
+        standard.wireframe = on;
+        if (!standard.emissive) continue;
+        // Stashed on the material rather than in a side table, so geometry
+        // that arrives with a later import is captured on its own first pass
+        // instead of being restored to some other material's value.
+        standard.userData.solidEmissive ??= standard.emissive.getHex();
+        standard.emissive.setHex(
+          on ? WIREFRAME_EMISSIVE : (standard.userData.solidEmissive as number),
+        );
+      }
+    });
+  }
+
+  /** Never ask for more pixels than the display actually has. */
+  private pixelRatioFor(requested: number): number {
+    return Math.min(requested, globalThis.devicePixelRatio ?? 1);
   }
 
   private addFloor(): void {
@@ -189,6 +263,10 @@ export class Viewer {
     );
     deck.position.z = -0.01;
     this.scene.add(deck);
+    // Kept so wireframe mode can hide it: the deck is two triangles, and as
+    // edges it is a giant X across the floor that reads as a rendering fault.
+    // The grid already says where the floor is.
+    this.deck = deck;
   }
 
   /** Replace the rig. Disposes the previous one. */
@@ -199,12 +277,14 @@ export class Viewer {
       this.fixtures.push(node);
       this.rigRoot.add(node.root);
     }
+    this.applyWireframe();
     this.frameRig();
   }
 
   /** Add already-loaded set geometry (GLB from the MVR) to the scene. */
   addSceneObject(object: Object3D): void {
     this.rigRoot.add(object);
+    this.applyWireframe();
   }
 
   private clearRig(): void {
@@ -248,6 +328,14 @@ export class Viewer {
         minFlux: this.options.minFlux,
         glowSize: this.options.glowSize,
       });
+    }
+
+    // Wireframe draws neither, and dropping them here rather than at draw time
+    // means the status bar reports 0 beams and 0 glows — which is the truth,
+    // where a stale count would read as beams that failed to appear.
+    if (this.options.wireframe) {
+      this.beamBuffer.length = 0;
+      this.glowBuffer.length = 0;
     }
 
     // Above the cap, keep the beams that contribute most. Sorting only when the
@@ -297,6 +385,18 @@ export class Viewer {
     this.controls.update();
     this.renderer.info.reset();
 
+    // Wireframe skips the volumetric half of the renderer entirely, and with
+    // no beams to add there is nothing for the offscreen target or the
+    // composite to do either — one pass, straight to the canvas. The clear
+    // colour is restored because the beam pass below leaves it transparent.
+    if (this.options.wireframe) {
+      this.renderer.setRenderTarget(null);
+      this.renderer.setClearColor(0x000000, 1);
+      this.renderer.clear();
+      this.renderer.render(this.scene, this.camera);
+      return;
+    }
+
     // 1. Opaque scene at full resolution, which also fills the depth texture
     //    the beams need.
     this.renderer.setRenderTarget(this.target);
@@ -338,6 +438,34 @@ export class Viewer {
   }
   get exposure(): number {
     return this.options.exposure;
+  }
+
+  /**
+   * Move the whole quality curve at once. See {@link detailSettings}.
+   *
+   * Both the pixel ratio and the beam scale decide a render target's size, so
+   * the buffers are rebuilt here rather than left to the next window resize.
+   */
+  set detail(value: number) {
+    const resolved = detailSettings(value);
+    this.options.detail = value;
+    this.options.steps = resolved.steps;
+    this.options.maxBeams = resolved.maxBeams;
+    this.options.beamScale = resolved.beamScale;
+    this.beams.steps = resolved.steps;
+    this.renderer.setPixelRatio(this.pixelRatioFor(resolved.pixelRatio));
+    this.resize();
+  }
+  get detail(): number {
+    return this.options.detail;
+  }
+
+  set wireframe(value: boolean) {
+    this.options.wireframe = value;
+    this.applyWireframe();
+  }
+  get wireframe(): boolean {
+    return this.options.wireframe;
   }
 
   dispose(): void {

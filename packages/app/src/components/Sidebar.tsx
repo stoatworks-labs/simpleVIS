@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Patch } from '@simplevis/core';
+import { detailSettings } from '@simplevis/render';
 import type { CitpPeer, NetworkInterface, SimpleVisApi, SourceStatus } from '../api.js';
 
 interface Props {
@@ -12,6 +13,10 @@ interface Props {
   onHazeChange: (value: number) => void;
   exposure: number;
   onExposureChange: (value: number) => void;
+  detail: number;
+  onDetailChange: (value: number) => void;
+  wireframe: boolean;
+  onWireframeChange: (value: boolean) => void;
   onFrameRig: () => void;
   onImport: (file: File) => void;
   onLoadExample: () => void;
@@ -263,22 +268,75 @@ export function Sidebar(props: Props) {
       <section className="panel">
         <h2>Look</h2>
         <label className="field">
-          <span>Haze <em>{props.haze.toFixed(2)}</em></span>
+          <span>Haze density <em>{props.haze.toFixed(2)}</em></span>
           <input
             type="range" min={0} max={1} step={0.01}
             value={props.haze}
+            disabled={props.wireframe}
             onChange={(e) => props.onHazeChange(Number(e.target.value))}
           />
         </label>
+        <p className="hint">
+          How much the air scatters. At 0 the air is clean and a beam is
+          invisible until it lands on something.
+        </p>
         <label className="field">
           <span>Exposure <em>{props.exposure.toFixed(2)}</em></span>
           <input
             type="range" min={0.1} max={4} step={0.05}
             value={props.exposure}
+            disabled={props.wireframe}
             onChange={(e) => props.onExposureChange(Number(e.target.value))}
           />
         </label>
       </section>
+
+      <section className="panel">
+        <h2>Quality</h2>
+        <label className="check">
+          <input
+            type="checkbox"
+            checked={props.wireframe}
+            onChange={(e) => props.onWireframeChange(e.target.checked)}
+          />
+          <span>Wireframe only</span>
+        </label>
+        <p className="hint">
+          Edges, no beams and no haze — one render pass instead of three. For
+          finding a fixture in a big rig, or for a machine that cannot carry the
+          volumetrics.
+        </p>
+
+        <label className="field">
+          <span>Detail <em>{detailName(props.detail)}</em></span>
+          <input
+            type="range" min={0} max={1} step={0.05}
+            value={props.detail}
+            disabled={props.wireframe}
+            onChange={(e) => props.onDetailChange(Number(e.target.value))}
+          />
+        </label>
+        {/* Spelling out what the slider resolves to, because "medium" tells
+            nobody why their frame rate moved. These are the four numbers that
+            actually decide the cost of a frame. */}
+        <p className="hint">{describeDetail(props.detail)}</p>
+      </section>
     </aside>
   );
+}
+
+/** The band a detail value falls in. 0.5 — "Medium" — is the shipped tuning. */
+function detailName(detail: number): string {
+  if (detail < 0.15) return 'Minimum';
+  if (detail < 0.375) return 'Low';
+  if (detail < 0.625) return 'Medium';
+  if (detail < 0.85) return 'High';
+  return 'Maximum';
+}
+
+function describeDetail(detail: number): string {
+  const d = detailSettings(detail);
+  const beams = `${Math.round(d.beamScale * 100)}% beam buffer`;
+  const pixels = Math.round(d.pixelRatio * 100) / 100;
+  return `${d.steps} raymarch steps · ${beams} · up to ${d.maxBeams} cones · ${pixels}x pixels`;
 }

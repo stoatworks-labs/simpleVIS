@@ -6,6 +6,7 @@
  */
 
 export * from './viewer.js';
+export * from './detail.js';
 export * from './beams.js';
 export * from './fixtures.js';
 export * from './assets.js';

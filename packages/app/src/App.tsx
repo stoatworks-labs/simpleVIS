@@ -33,6 +33,8 @@ export function App() {
   const [useDemo, setUseDemo] = useState(!api.capabilities.network);
   const [haze, setHaze] = useState(0.28);
   const [exposure, setExposure] = useState(1);
+  const [detail, setDetail] = useState(0.5);
+  const [wireframe, setWireframe] = useState(false);
   const [fps, setFps] = useState(0);
   const [beamCount, setBeamCount] = useState(0);
   const [glowCount, setGlowCount] = useState(0);
@@ -42,7 +44,7 @@ export function App() {
 
   useEffect(() => {
     if (!canvasRef.current) return;
-    const viewer = new Viewer(canvasRef.current, { haze, exposure });
+    const viewer = new Viewer(canvasRef.current, { haze, exposure, detail, wireframe });
     viewerRef.current = viewer;
 
     const resize = () => viewer.resize();
@@ -89,8 +91,9 @@ export function App() {
       viewer.dispose();
       viewerRef.current = null;
     };
-    // The viewer owns its own loop for the lifetime of the canvas; haze and
-    // exposure are pushed imperatively below rather than recreating it.
+    // The viewer owns its own loop for the lifetime of the canvas; haze,
+    // exposure, detail and wireframe are pushed imperatively below rather than
+    // recreating it.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -106,6 +109,12 @@ export function App() {
   useEffect(() => {
     if (viewerRef.current) viewerRef.current.exposure = exposure;
   }, [exposure]);
+  useEffect(() => {
+    if (viewerRef.current) viewerRef.current.detail = detail;
+  }, [detail]);
+  useEffect(() => {
+    if (viewerRef.current) viewerRef.current.wireframe = wireframe;
+  }, [wireframe]);
 
   /* ------------------------------------------------------------- backend */
 
@@ -182,6 +191,10 @@ export function App() {
         onHazeChange={setHaze}
         exposure={exposure}
         onExposureChange={setExposure}
+        detail={detail}
+        onDetailChange={setDetail}
+        wireframe={wireframe}
+        onWireframeChange={setWireframe}
         onFrameRig={() => viewerRef.current?.frameRig()}
         onImport={importMvr}
         onLoadExample={loadExample}

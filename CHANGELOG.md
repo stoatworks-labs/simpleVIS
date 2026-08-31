@@ -1,5 +1,28 @@
 # Changelog
 
+## Unreleased
+
+### Added
+- **A Quality panel: "Wireframe only" and a Detail slider.** Wireframe draws the
+  rig as edges with no beams and no haze, in one render pass instead of three —
+  for finding a fixture in a crowded rig, and for a machine that cannot carry
+  the volumetrics. Detail is one slider over the four things that actually
+  decide the cost of a frame (raymarch steps, beam-buffer resolution, the cone
+  cap, pixel ratio); the panel spells out what the current position resolves
+  to, because "medium" tells nobody why their frame rate moved.
+
+  Its midpoint is exactly the tuning the renderer shipped with, so the default
+  is unchanged, and a test fails if that drifts. The top stop deliberately
+  stops short of full-resolution beams: at 1.0 beam scale and a 2x pixel ratio
+  the beam pass is sixteen times the default's fragments, which on MA's
+  Demostage wedged the page rather than merely slowing it.
+
+### Changed
+- The haze slider is now labelled **Haze density**, and both Look sliders say
+  what they do. They grey out while wireframe is on, since there is nothing
+  volumetric for them to act on.
+
+
 ## v0.4.0 — 2026-08-21
 
 ### Fixed

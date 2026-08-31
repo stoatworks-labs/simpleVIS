@@ -247,6 +247,27 @@ evaluates to **1,721 emitters**. Two mistakes each took it to under 1 fps:
   (`glow.ts`) — one draw call for the lot — and only emitters above `minFlux`
   get a raymarched cone. 112 cones, 1,600 glows, ~514 draw calls, 60-70 fps.
 
+**Quality is one slider over four costs, and its top end is capped by
+measurement.** `detail.ts` maps a 0..1 `detail` to raymarch steps, beam-buffer
+scale, the cone cap and the pixel ratio. **0.5 is exactly the tuning above** —
+48 steps, half-resolution beams, 400 cones — so the default is a no-op against
+the numbers this file quotes, and `packages/render/test/detail.test.ts` fails
+if that drifts. The top stop is `beamScale` **0.75, not 1.0**: the beam pass is
+pure overdraw and scales with the square of the scale, so 1.0 at a 2x pixel
+ratio is sixteen times the default's fragments, and on the Demostage that
+wedged the page hard enough that a CDP evaluate never returned. A quality
+slider whose top end hangs the app is worse than one that stops short.
+
+**Wireframe mode needs emissive, not albedo.** "Wireframe only" skips passes 2
+and 3 entirely — one render straight to the canvas, no beams, no glows, deck
+hidden. The first attempt lifted material *colour* and the ambient light to
+make the edges legible and produced no visible change at all: this scene is lit
+at 0.12 ambient because the beams are meant to be the light in it, so a diffuse
+surface lands near black whatever colour it is. Emissive is added straight to
+outgoing radiance and is exactly the colour asked for regardless of lighting.
+The GridHelper is skipped (it is already edges, and at the wireframe grey a
+60x60 grid out-shouts the rig standing on it).
+
 **Beams are gain-corrected, not physical.** The integral of 1/d² through a few
 metres of haze is ~0.01, which is black. `BEAM_GAIN` puts it in range so
 exposure 1.0 is the default look, and the composite applies a Reinhard knee so
