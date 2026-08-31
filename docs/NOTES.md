@@ -7,7 +7,7 @@ person and dated by when each thing was learned — that date is usually the use
 Cross-cutting notes that are not specific to this repo live in
 [fleet-notes](https://github.com/stoatworks-labs/fleet-notes).
 
-*simpleVIS — lightweight lighting visualiser (MVR import, Art-Net/sACN/DMX in, volumetric haze); import+DMX core built and tested, no renderer or live input yet*
+*simpleVIS — lightweight lighting visualiser (MVR import, Art-Net/sACN/DMX in, volumetric haze); import + DMX + renderer + CITP all built and tested, plus video on pixel-mapped walls and graphics quality controls; still never driven by a real console*
 
 **simpleVIS** (`~/Projects/simpleVIS`, MIT, started 2026-08-02) — a lightweight
 real-time lighting visualiser: import an MVR, take live levels, fly a camera,
@@ -76,6 +76,62 @@ a test that wrote it. GDTF `.3ds` meshes are not loaded (bodies are proxy boxes
 at real published dimensions). GDTF `ModeMaster` is parsed but **not
 evaluated**. Only MA's Demostage and my own example rig have ever been parsed;
 Vectorworks / Capture / WYSIWYG / Depence exports untested.
+
+**Wall video shipped 2026-08-31, from browser-native sources only.** Any fixture
+whose GDTF expands into more than one addressable emitter is a video surface —
+`packages/core/src/pixelmap.ts` turns a wall's `GeometryReference` instances
+back into texture coordinates. On the Demostage that is 25 fixtures and 1,618
+pixels (16 LED walls plus the nine Sunrise2IPs, whose two cells map left/right).
+Sources are a local file and `getDisplayMedia`; both work in **either** build.
+
+Two decisions inside it worth not relitigating. **Frames are decimated to a
+128px canvas before sampling, never after** — a hundred-pixel wall filled from
+1080p reads 0.005% of the data and pays for all of it, and that cost is exactly
+what would make a native source impossible. **Video replaces a pixel's colour
+but never its intensity**, so the fixture's dimmer still gates it; the price is
+that with no desk and no demo look, video plays on a black wall and looks
+broken. Documented in the user guide rather than worked around.
+
+The trap, which cost three verification attempts: **a fixture's local axes do
+not know which way is up — only its placement does.** MA's wall is authored
+flat in local XY and stood up by a transform whose local +Y maps to world −Z,
+so the largest local Y is the wall's *bottom*. And **you cannot read a stacked
+wall's orientation off a screenshot**: eight walls in a tower repeat every ten
+rows and where a wall starts is invisible, so a banded clip looks identical
+flipped. Project each wall's highest and lowest emitter through the app's own
+camera and sample the PNG at those exact points instead.
+
+**NDI / Syphon / Spout — assessed 2026-08-31, not built.** They split the same
+way everything else does: NDI is UDP with mDNS discovery, Syphon is macOS
+inter-process texture sharing, so neither can exist in a tab. Desktop-only,
+behind the same source interface the file and capture sources already use.
+Before starting either:
+
+- **NDI's SDK is proprietary** (Vizrt EULA). An MIT public repo wants *dynamic
+  loading* of a runtime the user installs separately — the pattern the
+  [`ndi-sdk`](https://crates.io/crates/ndi-sdk) crate uses with vendored headers,
+  and what [DistroAV](https://github.com/DistroAV/DistroAV) (formerly obs-ndi)
+  does in practice. Plus the NDI mark on the About screen, which simpleVIS
+  already has a dialog for. NDI is the one that works on all three platforms.
+- **Syphon cannot be zero-copy here.** Its whole point is sharing an IOSurface
+  straight into Metal, and this renders WebGL inside a WKWebView, where nothing
+  supported binds an external IOSurface as a texture. It would read back to CPU
+  and go through the same decimation as everything else — fine at wall-pixel
+  counts, but do not describe it as Syphon's fast path. macOS only; Windows is
+  Spout, Linux has no equivalent.
+
+**Quality controls shipped 2026-08-31**: a wireframe-only toggle and a Detail
+slider over raymarch steps, beam-buffer scale, cone cap and pixel ratio. Its
+midpoint is exactly the tuning the renderer was measured at, pinned by a test.
+Its **top stop is beamScale 0.75, not 1.0** — at 1.0 with a 2x pixel ratio the
+beam pass is sixteen times the default's fragments and it *wedged* the page on
+the Demostage, not merely slowed it.
+
+**Dev-server gotcha, found the hard way:** draw counts read off a long-lived
+Vite dev server drift upward across page loads. Restart the server before
+trusting the number — this repo judges the renderer by that counter. (The real
+bug hiding underneath was that `setPatch` never removed set geometry, so a
+second import drew both plots; fixed.)
 
 **OPEN LOOP — verify against a real console. Blocked on GUI config, twice.**
 Both consoles are installed and both were launched successfully; neither can be
