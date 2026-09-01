@@ -15,10 +15,10 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "fast-xml-parser": "^5.11.0",
+    "fast-xml-parser": "^5.11.1",
     "fflate": "^0.8.2"
   },
   "devDependencies": {
-    "@types/node": "^26.2.0"
+    "@types/node": "^26.4.0"
   }
 }
