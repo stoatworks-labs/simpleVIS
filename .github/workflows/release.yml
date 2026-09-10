@@ -58,12 +58,18 @@ jobs:
           # Bundle targets are per-platform: naming a bundler the host cannot
           # run (nsis on macOS, dmg on Linux) fails the whole build rather than
           # being skipped.
+          # ONE macOS build for both architectures: universal-apple-darwin
+          # compiles both slices and lipos them, so an Intel Mac and an Apple
+          # Silicon Mac download the same file. Both were already built on this
+          # one runner, so this merges them rather than adding a build.
+          #
+          # rust_targets is what rustup installs -- universal-apple-darwin is a
+          # Tauri bundling target and `rustup target add` on it fails -- while
+          # `target` and `args` stay what tauri-action is given.
           - platform: macos-14
-            target: aarch64-apple-darwin
-            args: --target aarch64-apple-darwin --bundles app,dmg
-          - platform: macos-14
-            target: x86_64-apple-darwin
-            args: --target x86_64-apple-darwin --bundles app,dmg
+            target: universal-apple-darwin
+            rust_targets: aarch64-apple-darwin,x86_64-apple-darwin
+            args: --target universal-apple-darwin --bundles app,dmg
           # No AppImage: its bundler needs FUSE, which CI runners lack, and it
           # fails there even with APPIMAGE_EXTRACT_AND_RUN=1 — taking the deb
           # and rpm targets down with it.
@@ -84,7 +90,7 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@stable
         with:
-          targets: ${{ matrix.target }}
+          targets: ${{ matrix.rust_targets || matrix.target }}
 
       - uses: swatinem/rust-cache@v2
         with:
@@ -103,11 +109,51 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tagName: ${{ github.ref_name }}
+          # Guarded, not bare `github.ref_name`: unguarded, ANY
+          # workflow_dispatch from a branch publishes a real release named
+          # after that branch. On a tag push this is identical.
+          tagName: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
           releaseName: simpleVIS ${{ github.ref_name }}
           releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}
+
+
+      # Proof that "universal" is universal. simpleVIS is the repo this fleet
+      # learned the lesson on: it once published a macos-universal asset that
+      # was arm64 only, and it configured, built, tested and uploaded clean
+      # while doing it.
+      #
+      # Captured and matched with `case`, never piped into grep: steps run as
+      # `bash -eo pipefail`, so grep exiting at its first match SIGPIPEs lipo
+      # and fails the step BECAUSE the match was found.
+      - name: Verify the macOS bundle is universal
+        if: matrix.target == 'universal-apple-darwin'
+        shell: bash
+        run: |
+          appdir="src-tauri/target/${{ matrix.target }}/release/bundle/macos"
+          app="$(find "$appdir" -maxdepth 1 -name '*.app' | head -1)"
+          [ -n "$app" ] || { echo "no .app produced in $appdir" >&2; exit 1; }
+          found=0
+          while IFS= read -r f; do
+            __archs="$( lipo -archs "$f" 2>/dev/null )" || continue
+            [ -n "$__archs" ] || continue
+            found=$((found+1))
+            echo "${f#$app/}: $__archs"
+            case "$__archs" in
+              *arm64*) ;;
+              *) echo "expected an arm64 slice in $f, got: $__archs" >&2; exit 1 ;;
+            esac
+            case "$__archs" in
+              *x86_64*) ;;
+              *) echo "expected an x86_64 slice in $f, got: $__archs" >&2; exit 1 ;;
+            esac
+          done < <(find "$app" -type f -perm -u+x)
+          # A find that matched nothing would pass every check above in silence.
+          if [ "$found" -lt 1 ]; then
+            echo "found no Mach-O to check in $app" >&2
+            exit 1
+          fi
 
   hosted:
     needs: test
