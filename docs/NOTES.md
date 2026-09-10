@@ -14,7 +14,7 @@ real-time lighting visualiser: import an MVR, take live levels, fly a camera,
 watch the programming in volumetric haze. **PUBLIC** at
 github.com/stoatworks-labs/simpleVIS, **v0.2.0 released on 4 platforms**
 (macOS arm64+x64, Windows, Linux deb/rpm), hosted build **LIVE** at
-https://simplevis.stoatworks-labs.com, video at
+https://simplevis-demo.stoatworks-labs.com, video at
 https://www.youtube.com/watch?v=HgVhKPJmTzE.
 
 **The fact the whole architecture follows from: a static web app cannot receive
@@ -182,3 +182,27 @@ than writing fresh**. `stagewash` for the three.js scene and IES photometry.
 
 Format traps live in [mvr gdtf traps](https://github.com/stoatworks-labs/fleet-notes/blob/main/notes/reference_mvr_gdtf_traps.md). See also
 [agents md convention](https://github.com/stoatworks-labs/fleet-notes/blob/main/notes/reference_agents_md_convention.md), **disclaimer scope** (working-practice note, kept in Claude memory).
+
+## 2026-09-10: the hosted build is `simplevis-demo`, and is listed as a demo
+
+It was in the stoatworks Web tools menu as though it were a tool you could use.
+It is not one and cannot become one: **a browser cannot receive Art-Net, sACN or
+CITP**, so this build has no input at all — it flies an MVR you drop in, on the
+built-in look. That is a demo of the desktop app, in the same sense the Resolume
+plugins' demos are, and the site now lists it as one (removed from
+`webtools.json`, `demo` kept in `projects.json`, so `/software/simplevis/`
+carries "Try the live demo").
+
+The host moved to match: **`simplevis-demo.stoatworks-labs.com`**, and the
+Worker with it. The fleet names a demo Worker after its host — `old-cathode-demo`,
+`nesolume-demo` — and a Worker name is not editable in place: deploying under a
+new `name` creates a *second* Worker and leaves the first holding the old custom
+domain. So the old `simplevis` Worker was deleted afterwards, which is what
+released `simplevis.stoatworks-labs.com` and the DNS record Cloudflare managed
+for it. **The old URL is gone rather than redirected** — links to it, including
+any in the video description, need updating.
+
+Three files carried the host and all three matter: `wrangler.toml` (the route),
+`.github/workflows/deploy.yml` (the post-deploy live check curls it twice — miss
+it and every future deploy fails against a host that no longer exists), and the
+status line above. Nothing in the app itself hardcodes its own origin.

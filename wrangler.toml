@@ -15,13 +15,23 @@
 # `/*  /index.html  200` line, and the assets runtime rejects it as an infinite
 # loop and fails the whole deploy. `not_found_handling` is the Worker
 # equivalent.
-name = "simplevis"
+#
+# `-demo`, on both the Worker name and the host, since 2026-09-10. A browser
+# cannot receive Art-Net, sACN or CITP, so this build has no input and can only
+# ever demonstrate the desktop app — it is listed on the site as a demo rather
+# than in the Web tools menu, and it is named the way every other demo in the
+# fleet is (old-cathode-demo, nesolume-demo). The Worker name matches the host
+# on purpose: that is the fleet's rule, and it is what makes a stray Worker in
+# the dashboard identifiable. Renaming a Worker does not move one, it deploys a
+# second — the old `simplevis` Worker was deleted by hand afterwards, which is
+# what released `simplevis.stoatworks-labs.com` and its managed DNS record.
+name = "simplevis-demo"
 compatibility_date = "2026-08-02"
 
 # `custom_domain = true` makes Cloudflare create and manage the DNS record
 # itself. Adding a proxied CNAME by hand as well conflicts with it.
 [[routes]]
-pattern = "simplevis.stoatworks-labs.com"
+pattern = "simplevis-demo.stoatworks-labs.com"
 custom_domain = true
 
 [assets]
