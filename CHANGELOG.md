@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v0.4.1 — 2026-09-04
 
 ### Added
 - **Video on LED walls.** Any fixture whose GDTF expands into more than one
