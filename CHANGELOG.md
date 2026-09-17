@@ -1,6 +1,14 @@
 # Changelog
 
-## v0.4.1 — 2026-09-04
+## v0.4.2 — 2026-09-17
+
+A packaging release; nothing in the app changed.
+
+### Changed
+- **One universal macOS build** in place of the two per-arch ones, and a
+  `workflow_dispatch` run of the release workflow no longer publishes a release.
+- The hosted build's address is `simplevis-demo.stoatworks-labs.com`.
+
 
 ### Added
 - **Video on LED walls.** Any fixture whose GDTF expands into more than one
