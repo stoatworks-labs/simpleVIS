@@ -16,9 +16,19 @@ Libraries, SDKs and frameworks the project is built on or bundles.
 Licence: MIT or Apache-2.0  
 Copyright: The Tauri Programme within The Commons Conservancy
 
-A Cargo and npm dependency.
+A Cargo and npm dependency — of the app itself under src-tauri/, or of the desktop launcher under launcher/src-tauri/.
 
-Puts a web front end on a native Rust core using the platform's own webview, so the binary stays small and the DSP stays in Rust.
+Wraps a web front end in a native desktop app using the platform's own webview rather than a bundled browser, so the binary stays small.
+
+### The Rust crate ecosystem
+
+<https://crates.io>  
+Licence: predominantly MIT or Apache-2.0  
+Copyright: the individual crate authors
+
+Cargo dependencies, resolved and pinned in Cargo.lock.
+
+Async runtimes, protocol codecs, serialisation and GUI toolkits. The exact set and versions for any build are in that repo's Cargo.lock, which is the authoritative list.
 
 ### The npm ecosystem
 
