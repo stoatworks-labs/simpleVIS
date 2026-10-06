@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.4.3 — 2026-10-06
+
+A dependency release; nothing in the app changed.
+
+### Changed
+- Rendered with **three.js 0.186.1**, and built with Vite 8.3.1.
+
 ## v0.4.2 — 2026-09-17
 
 A packaging release; nothing in the app changed.
