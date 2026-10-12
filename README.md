@@ -117,7 +117,7 @@ macOS builds are signed and notarised and open normally. The Windows builds are 
 
 ```bash
 npm install
-npm test --workspaces
+npm test --workspaces --if-present
 npm run dev --workspace=@simplevis/app
 ```
 

@@ -6,7 +6,7 @@ just the commands.
 ## Test
 
 ```bash
-npm test --workspaces
+npm test --workspaces --if-present
 ```
 
 The core tests run against **MA Lighting's `Demostage_MVR.mvr`**, which is not
@@ -20,7 +20,7 @@ green run means everything passed.
 Point them at a copy elsewhere with:
 
 ```bash
-SIMPLEVIS_TEST_MVR=/path/to/Demostage_MVR.mvr npm test --workspaces
+SIMPLEVIS_TEST_MVR=/path/to/Demostage_MVR.mvr npm test --workspaces --if-present
 ```
 
 ## Typecheck

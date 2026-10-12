@@ -395,8 +395,12 @@ typecheck clean):
   should not be described as Syphon's fast path.
 - **Fixture bodies are proxy boxes**, sized from real GDTF `Model` dimensions.
   The `.3ds` meshes inside a GDTF are not loaded.
-- **Windows and Linux have never been built**, only macOS arm64.
-- **Only one MVR has ever been parsed.** Exports from Vectorworks, Capture,
+- **Windows and Linux are built only by the release workflow**, which has put a
+  Windows installer and Linux packages on every release since v0.1.0. Nothing
+  here records either being run; the only desktop bundle verified to launch is
+  macOS arm64.
+- **Only two MVRs have ever been parsed**: MA's Demostage and the example rig
+  `scripts/make-example-rig.py` writes. Exports from Vectorworks, Capture,
   WYSIWYG and Depence are untested; the `universe.channel` address form is
   implemented from the spec and has never seen a real file that uses it.
 - **GDTF `ModeMaster` relations are parsed but not evaluated.** Where several
