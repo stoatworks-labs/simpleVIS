@@ -8,7 +8,7 @@
 > [Verified vs assumed](#verified-vs-assumed)).
 
 A lightweight real-time lighting visualiser. Import an MVR, take live levels
-over Art-Net, sACN or USB DMX, fly a camera around the rig, and see your
+over Art-Net, sACN, USB DMX or CITP, fly a camera around the rig, and see your
 programming in volumetric haze.
 
 ![simpleVIS](docs/screenshot.png)
@@ -27,7 +27,7 @@ two targets from one codebase:
 
 | Build | What it is | Live input |
 |---|---|---|
-| **Desktop** (Tauri v2) | the real tool | Art-Net, sACN, USB DMX |
+| **Desktop** (Tauri v2) | the real tool | Art-Net, sACN, USB DMX, CITP |
 | **Hosted** | offline previz and plot viewer in a tab | none — built-in demo look |
 
 The shared code is identical; only the transport differs. The hosted build
