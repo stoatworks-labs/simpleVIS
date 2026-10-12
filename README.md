@@ -4,8 +4,8 @@
 > (Anthropic), directed and reviewed by a human author. MVR and GDTF import is
 > tested against real files, and the Art-Net and sACN parsers against real packet
 > layouts. **Nothing has been driven by a real console or a real DMX interface
-> yet**, so levels and patch coming from a desk remain unverified — see
-> [Verified vs assumed](#verified-vs-assumed).
+> yet**, so levels and patch coming from a desk are still unverified (see
+> [Verified vs assumed](#verified-vs-assumed)).
 
 A lightweight real-time lighting visualiser. Import an MVR, take live levels
 over Art-Net, sACN or USB DMX, fly a camera around the rig, and see your
@@ -15,14 +15,15 @@ programming in volumetric haze.
 
 ## What it is for
 
-Seeing what a rig will do before you are in the room with it — checking looks
+Seeing what a rig will do before you're in the room with it: checking looks
 and coverage against a real patch, without a visualiser licence and without
 modelling the venue by hand.
 
 ## Two builds, and why
 
-Art-Net and sACN are UDP, and **a browser cannot receive UDP** — there is no
-flag, polyfill or workaround. So simpleVIS ships two targets from one codebase:
+Art-Net and sACN are UDP, and **a browser can't receive UDP**. There's no
+flag, polyfill or workaround for it, however nicely you ask. So simpleVIS ships
+two targets from one codebase:
 
 | Build | What it is | Live input |
 |---|---|---|
@@ -30,11 +31,11 @@ flag, polyfill or workaround. So simpleVIS ships two targets from one codebase:
 | **Hosted** | offline previz and plot viewer in a tab | none — built-in demo look |
 
 The shared code is identical; only the transport differs. The hosted build
-*hides* what it cannot do rather than offering controls that fail.
+*hides* what it can't do rather than offering controls that fail.
 
 ## Import
 
-**MVR** (`.mvr`), including the GDTF fixture definitions embedded inside it —
+**MVR** (`.mvr`), including the GDTF fixture definitions embedded inside it:
 geometry tree, DMX modes, beam angles, colour mixing. Import only; simpleVIS
 never writes MVR.
 
@@ -54,12 +55,12 @@ channels across a hundred `GeometryReference`s is correctly resolved to its real
 Two sources per universe are merged HTP or LTP with a 4-second timeout; a third
 is refused and reported rather than silently dropped.
 
-CITP covers three of its layers: **PINF** for peer discovery, **SDMX** for
-levels (it does carry them, as channel blocks — a common misconception says
-otherwise), and **FPTC** so the patch can follow the desk without re-importing
-an MVR. `SXSr` is honoured, so a console that says "take my levels from Art-Net"
-is not also counted as a CITP source. MSEX and CAEX — thumbnails and viewport
-streaming — are not implemented.
+simpleVIS covers three of CITP's layers: **PINF** for peer discovery, **SDMX**
+for levels (it does carry them, as channel blocks, whatever the common
+misconception says), and **FPTC** so the patch can follow the desk without
+re-importing an MVR. `SXSr` is honoured, so a console that says "take my levels
+from Art-Net" isn't also counted as a CITP source. MSEX and CAEX (thumbnails and
+viewport streaming) aren't implemented.
 
 ## Video
 
@@ -121,8 +122,9 @@ npm run dev --workspace=@simplevis/app
 ```
 
 See [CLAUDE.md](CLAUDE.md) for commands and [AGENTS.md](AGENTS.md) for the
-design notes, load-bearing invariants, and the file-format traps found building
-this — including the several ways an MVR will quietly render wrong.
+design notes, the invariants the code relies on, and the file-format traps I
+found building this, including the several ways an MVR will render wrong without
+telling you.
 
 ## Verified vs assumed
 
@@ -131,7 +133,7 @@ tested against real files and real packet layouts; **nothing has been driven by
 a real console or a real DMX interface yet**. CITP has had first contact with a
 real peer (Capture 2026), but Capture is a DMX *consumer* like simpleVIS, so
 **levels and patch from a real console remain unverified**.
-[AGENTS.md](AGENTS.md) has the precise account, and it is kept honest.
+[AGENTS.md](AGENTS.md) has the full account, and I keep it honest.
 
 <!-- attributions:start -->
 This project is built on other people's work — see [ATTRIBUTIONS.md](ATTRIBUTIONS.md).

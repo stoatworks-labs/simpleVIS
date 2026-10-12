@@ -1,10 +1,10 @@
 # simpleVIS user guide
 
-simpleVIS is **a lightweight real-time lighting visualiser**. Import an MVR, take live levels over
+simpleVIS is a lightweight real-time lighting visualiser. Import an MVR, take live levels over
 Art-Net, sACN, USB DMX or CITP, fly a camera around the rig, and see your programming in
 volumetric haze.
 
-It is for seeing what a rig will do before you are in the room with it — checking looks and
+It's for seeing what a rig will do before you're in the room with it: checking looks and
 coverage against a real patch, without a visualiser licence and without modelling the venue by
 hand.
 
@@ -12,7 +12,7 @@ hand.
 > against real files and real packet layouts. The full 119-fixture MA Demostage renders at 60–70
 > fps, and the receive path is verified over real sockets.
 >
-> **No real console and no DMX interface has driven it yet** — every packet so far has come from
+> **No real console and no DMX interface has driven it yet.** Every packet so far has come from
 > a test that wrote it, or from the built-in demo source. CITP has had first contact with a real
 > peer (Capture 2026), but Capture is a DMX *consumer* like simpleVIS, so **levels and patch from
 > a real console remain unverified**.
@@ -23,7 +23,7 @@ hand.
 
 ## Two builds, and why
 
-**Art-Net and sACN are UDP, and a browser cannot receive UDP** — there is no flag, polyfill or
+**Art-Net and sACN are UDP, and a browser can't receive UDP.** There's no flag, polyfill or
 workaround. So simpleVIS ships two targets from one codebase:
 
 | Build | What it is | Live input |
@@ -31,7 +31,7 @@ workaround. So simpleVIS ships two targets from one codebase:
 | **Desktop** (Tauri v2) | the real tool | Art-Net, sACN, USB DMX, CITP |
 | **Hosted** | offline previz and plot viewer in a tab | none — built-in demo look |
 
-The shared code is identical; only the transport differs. **The hosted build hides what it cannot
+The shared code is identical; only the transport differs. **The hosted build hides what it can't
 do** rather than offering controls that fail.
 
 ![simpleVIS: an imported rig in volumetric haze, with the camera flown round it.](screenshot.png)
@@ -40,7 +40,7 @@ do** rather than offering controls that fail.
 
 ## Importing a rig
 
-**MVR (`.mvr`)**, including the GDTF fixture definitions embedded inside it — geometry tree, DMX
+**MVR (`.mvr`)**, including the GDTF fixture definitions embedded inside it: geometry tree, DMX
 modes, beam angles, colour mixing.
 
 > **Import only. simpleVIS never writes MVR.** Nothing you do here can damage the file the desk
@@ -48,7 +48,7 @@ modes, beam angles, colour mixing.
 
 **Pixel-mapped fixtures work properly.** An MVR whose LED wall declares four template channels
 across a hundred `GeometryReference`s is resolved to its real **300-channel footprint, one DMX
-slot per pixel** — rather than being taken at face value as four channels.
+slot per pixel**, rather than being taken at face value as four channels.
 
 ---
 
@@ -62,29 +62,29 @@ slot per pixel** — rather than being taken at face value as four channels.
 | **CITP** | Peer discovery (PINF), levels (SDMX), and fixture patch from the console (FPTC) |
 
 > **Two sources per universe are merged HTP or LTP with a 4-second timeout. A third is refused and
-> reported** rather than silently dropped — so a mystery universe is a message, not a guess.
+> reported** rather than silently dropped, so a mystery universe gets a message instead of a guess.
 
 ### What CITP does and doesn't cover
 
 Three layers are implemented:
 
-- **PINF** — peer discovery.
-- **SDMX** — levels. It *does* carry them, as channel blocks; a common misconception says
-  otherwise.
-- **FPTC** — fixture patch, **so the patch can follow the desk without re-importing an MVR**.
+- **PINF**: peer discovery.
+- **SDMX**: levels. It *does* carry them, as channel blocks, whatever the common misconception
+  says.
+- **FPTC**: fixture patch, **so the patch can follow the desk without re-importing an MVR**.
 
-`SXSr` is honoured, so a console that says "take my levels from Art-Net" is not *also* counted as
+`SXSr` is honoured, so a console that says "take my levels from Art-Net" isn't *also* counted as
 a CITP source and double-merged.
 
-**MSEX and CAEX — thumbnails and viewport streaming — are not implemented.** simpleVIS will not
-stream its viewport back to the desk.
+**MSEX and CAEX (thumbnails and viewport streaming) aren't implemented.** simpleVIS won't stream
+its viewport back to the desk.
 
 ---
 
 ## Video on LED walls
 
 Any fixture whose GDTF expands into **more than one addressable emitter** is treated as a video
-surface — an LED wall, a pixel bar, a two-cell batten. The sidebar says how many the loaded rig
+surface: an LED wall, a pixel bar, a two-cell batten. The sidebar says how many the loaded rig
 has and how many pixels that comes to, so a rig with none says so rather than appearing to
 ignore you.
 
@@ -98,13 +98,13 @@ ignore you.
 sixteen tiles of one picture.
 
 > **Video replaces the pixel's colour, not its dimmer.** A blackout blacks the walls out with
-> everything else — which also means that with no desk connected and the demo look switched off,
-> the walls' dimmers are at zero and video plays on a black wall. That is the fixture doing what
-> it is told, not a broken feed.
+> everything else. That also means that with no desk connected and the demo look switched off,
+> the walls' dimmers are at zero and video plays on a black wall. That's the fixture doing what
+> it's told, not a broken feed.
 
 The picture is placed from the wall's geometry as it hangs, so content is upright in the room
-whatever attitude the wall is at. Left-right is *not* derivable — nothing in an MVR says which
-face of a wall is its front — so a mirrored wall would need a per-fixture flip, which does not
+whatever attitude the wall is at. Left-right *can't* be worked out (nothing in an MVR says which
+face of a wall is its front), so a mirrored wall would need a per-fixture flip, which doesn't
 exist yet.
 
 **Nothing leaves the machine.** A file is read through the page, and a captured stream is never
@@ -114,8 +114,8 @@ sent anywhere.
 
 ## Look and quality
 
-Two panels in the sidebar, and the split between them is deliberate: **Look** changes what the
-rig looks like, **Quality** changes what a frame costs.
+Two panels in the sidebar, split on purpose: **Look** changes what the rig looks like, and
+**Quality** changes what a frame costs.
 
 | Control | What it does |
 |---|---|
@@ -124,12 +124,12 @@ rig looks like, **Quality** changes what a frame costs.
 | **Wireframe only** | Edges, no beams, no haze — one render pass instead of three. For finding a fixture in a crowded rig, and for a machine that cannot carry the volumetrics. |
 | **Detail** | One slider over the four things that decide the cost of a frame: raymarch steps, beam-buffer resolution, the cap on volumetric cones, and pixel ratio. The panel spells out what the current position resolves to. |
 
-**Detail sits at Medium by default, and Medium is the tuning the renderer was measured at** — on
+**Detail sits at Medium by default, and Medium is the tuning the renderer was measured at**: on
 a 119-fixture, 1,721-emitter show it runs at full frame rate there. Minimum roughly doubles the
-headroom on a tired GPU; Maximum is a *lot* more expensive and is meant for a machine with a GPU
-to spare, not as the setting to leave it on.
+headroom on a tired GPU. Maximum is a *lot* more expensive, and it's meant for a machine with a
+GPU to spare, not as the setting to leave it on.
 
-> **Nothing here changes the numbers.** These are rendering costs, not lighting values — the
+> **Nothing here changes the numbers.** These are rendering costs, not lighting values: the
 > levels, angles and colours the desk sends are evaluated identically at every setting.
 
 ---
@@ -157,6 +157,6 @@ to spare, not as the setting to leave it on.
 
 ## See also
 
-- [AGENTS.md](../AGENTS.md) — design notes, load-bearing invariants, and **the several ways an
-  MVR will quietly render wrong**
-- [README](../README.md) — the two builds, protocol coverage and downloads
+- [AGENTS.md](../AGENTS.md): design notes, the invariants the code relies on, and **the several
+  ways an MVR will render wrong without telling you**
+- [README](../README.md): the two builds, protocol coverage and downloads
