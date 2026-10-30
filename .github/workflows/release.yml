@@ -53,7 +53,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # macOS arm64 and x86_64 both cross-compile from macos-14.
+          # macOS arm64 and x86_64 both cross-compile from macos-15.
           # The Intel runners (macos-13) are retired — do not reintroduce them.
           # Bundle targets are per-platform: naming a bundler the host cannot
           # run (nsis on macOS, dmg on Linux) fails the whole build rather than
@@ -66,7 +66,7 @@ jobs:
           # rust_targets is what rustup installs -- universal-apple-darwin is a
           # Tauri bundling target and `rustup target add` on it fails -- while
           # `target` and `args` stay what tauri-action is given.
-          - platform: macos-14
+          - platform: macos-15
             target: universal-apple-darwin
             rust_targets: aarch64-apple-darwin,x86_64-apple-darwin
             args: --target universal-apple-darwin --bundles app,dmg
