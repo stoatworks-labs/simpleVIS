@@ -11,6 +11,8 @@ A lightweight real-time lighting visualiser. Import an MVR, take live levels
 over Art-Net, sACN, USB DMX or CITP, fly a camera around the rig, and see your
 programming in volumetric haze.
 
+The [project page](https://stoatworks-labs.com/software/simplevis/) has the downloads, the [user guide](https://stoatworks-labs.com/software/simplevis/guide/), the video and a demo you can click around in the browser.
+
 ![simpleVIS](docs/screenshot.png)
 
 ## What it is for
