@@ -10,6 +10,10 @@ target/
 # skip when it is absent. See packages/core/test/fixtures.ts.
 *.mvr
 *.gdtf
+# The one exception: the example rig is authored here by
+# scripts/make-example-rig.py, so it is ours to publish, and it has to be
+# committed for any build Actions makes to ship it.
+!packages/app/public/example-rig.mvr
 # Vendor fixture files must never reach a build: anything under an app's
 # public/ directory is copied verbatim into dist/ and would be published.
 # scripts/verify-render.mjs reads the MVR straight off disk over CDP instead.

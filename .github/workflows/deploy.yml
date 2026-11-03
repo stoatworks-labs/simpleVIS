@@ -113,3 +113,20 @@ jobs:
           echo "::error::build's <head>. The upload succeeded, so this is the edge"
           echo "::error::serving something else — check the Worker's routes."
           exit 1
+
+      # What a visitor's click on Load example rig fetches. A missing asset is
+      # not a 404 here: not_found_handling answers with index.html and a 200,
+      # which is how the demo shipped a broken button from September to
+      # November 2026. So compare the bytes, not the status.
+      - name: Check the live site serves the example rig
+        run: |
+          set -euo pipefail
+          curl -sSf --max-time 30 -o live-rig.mvr \
+            "https://simplevis-demo.stoatworks-labs.com/example-rig.mvr"
+          if ! cmp -s live-rig.mvr packages/app/dist/example-rig.mvr; then
+            echo "::error::https://simplevis-demo.stoatworks-labs.com/example-rig.mvr is not this build's"
+            echo "::error::example rig (got $(wc -c < live-rig.mvr) bytes starting"
+            echo "::error::'$(head -c 15 live-rig.mvr | tr -cd '[:print:]')')."
+            exit 1
+          fi
+          echo "live example rig matches this build"

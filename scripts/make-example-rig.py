@@ -21,13 +21,22 @@ parser has — the two would agree on a shared misreading. The Demostage suites
 remain the authority on what real exports look like; this is a fixture, not a
 reference.
 
-    python3 scripts/make-example-rig.py
+    python3 scripts/make-example-rig.py           # write it
+    python3 scripts/make-example-rig.py --check   # fail if the committed one is stale
 
-Writes `packages/app/public/example-rig.mvr`.
+Writes `packages/app/public/example-rig.mvr`, which is **committed**: nothing
+in CI, deploy or release runs this script, and `.gitignore` excepts this one
+MVR from its `*.mvr` rule. Until 2026-11-03 it was ignored like the vendor
+files, so every build Actions made shipped without it, and **Load example rig**
+on the hosted demo fetched the SPA's index.html and failed with "invalid zip
+data". Run this and commit the result whenever the rig changes; CI runs
+`--check`, and the app's build fails if the file is missing from dist/.
 """
 from __future__ import annotations
 
+import io
 import math
+import sys
 import zipfile
 from pathlib import Path
 from xml.sax.saxutils import escape
@@ -270,27 +279,79 @@ def fixture_xml(name: str, uuid: str, matrix: str, address: int,
 """
 
 
-def main() -> int:
-    gdtf_bytes = _zip_bytes({"description.xml": gdtf_description().encode("utf-8")})
+def main(argv: list[str]) -> int:
+    rig = rig_bytes()
+    if "--check" in argv:
+        return check(rig)
 
     OUT.parent.mkdir(parents=True, exist_ok=True)
-    with zipfile.ZipFile(OUT, "w", zipfile.ZIP_DEFLATED) as archive:
-        archive.writestr("GeneralSceneDescription.xml", scene_description())
-        archive.writestr(f"{GDTF_NAME}.gdtf", gdtf_bytes)
-
-    print(f"wrote {OUT} ({OUT.stat().st_size} bytes)")
+    OUT.write_bytes(rig)
+    print(f"wrote {OUT} ({len(rig)} bytes)")
     return 0
 
 
-def _zip_bytes(entries: dict[str, bytes]) -> bytes:
-    import io
+def rig_bytes() -> bytes:
+    gdtf_bytes = _zip_bytes({"description.xml": gdtf_description().encode("utf-8")})
+    return _zip_bytes({
+        "GeneralSceneDescription.xml": scene_description().encode("utf-8"),
+        f"{GDTF_NAME}.gdtf": gdtf_bytes,
+    })
 
+
+def check(rig: bytes) -> int:
+    """Fail unless the committed rig holds what this script writes.
+
+    Compares what the archives hold, the GDTF inside opened too, rather than
+    the archives' bytes: deflate output may differ between zlib builds (macOS
+    ships its own), and a check that failed on a runner whose zlib packs
+    differently would be noise.
+    """
+    fix = "run `python3 scripts/make-example-rig.py` and commit the result"
+    if not OUT.exists():
+        print(f"{OUT} is missing: {fix}", file=sys.stderr)
+        return 1
+    try:
+        committed = _contents(OUT.read_bytes())
+    except zipfile.BadZipFile:
+        print(f"{OUT} is not a zip: {fix}", file=sys.stderr)
+        return 1
+    if committed != _contents(rig):
+        print(f"{OUT} is not what this script writes: {fix}", file=sys.stderr)
+        return 1
+    print(f"{OUT.name} matches the script")
+    return 0
+
+
+def _contents(archive: bytes) -> dict[str, object]:
+    contents: dict[str, object] = {}
+    with zipfile.ZipFile(io.BytesIO(archive)) as opened:
+        for name in opened.namelist():
+            data = opened.read(name)
+            contents[name] = _contents(data) if name.endswith(".gdtf") else data
+    return contents
+
+
+# Every entry is stamped with this rather than the time it was written, so the
+# same rig always comes out as the same bytes and the committed file only
+# changes when the rig does. Two runs three months apart used to differ in
+# nothing but their timestamps. 1980-01-01 is the earliest a zip can record.
+ZIP_EPOCH = (1980, 1, 1, 0, 0, 0)
+
+
+def _zip_bytes(entries: dict[str, bytes]) -> bytes:
     buffer = io.BytesIO()
-    with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as archive:
+    with zipfile.ZipFile(buffer, "w") as archive:
         for name, data in entries.items():
-            archive.writestr(name, data)
+            info = zipfile.ZipInfo(name, date_time=ZIP_EPOCH)
+            info.compress_type = zipfile.ZIP_DEFLATED
+            # ZipInfo records the host OS (0 on Windows, 3 elsewhere); pin it
+            # so the bytes do not depend on where this ran. 0o600 is what
+            # writestr gave the entries before.
+            info.create_system = 3
+            info.external_attr = 0o600 << 16
+            archive.writestr(info, data)
     return buffer.getvalue()
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(main(sys.argv[1:]))

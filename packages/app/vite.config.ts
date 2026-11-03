@@ -1,7 +1,8 @@
 import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
+import { join, resolve } from 'node:path';
 
 // The ROOT package.json, not this workspace's: the release tag follows the root
 // version, and a workspace copy drifts behind it silently (atem-overseer's had).
@@ -52,6 +53,39 @@ function supportFooter(mode: string): Plugin {
   };
 }
 
+/**
+ * Fail the build when the example rig has not reached dist/.
+ *
+ * **Load example rig** fetches `example-rig.mvr` from the site root, and a
+ * missing file is no 404 there: the Worker's SPA fallback answers with
+ * index.html, so the button fails at runtime with "invalid zip data". The
+ * hosted demo shipped that way from the first deploy Actions made (September
+ * 2026) until 2026-11-03, because `*.mvr` was gitignored and only Allan's
+ * laptop had the file. Checking here covers every build at once: CI, deploy,
+ * the release's hosted artifact and the Tauri desktop build, whose
+ * beforeBuildCommand runs `build:tauri`.
+ */
+function requireExampleRig(): Plugin {
+  let outDir = 'dist';
+  return {
+    name: 'simplevis-require-example-rig',
+    apply: 'build',
+    configResolved(config) {
+      outDir = resolve(config.root, config.build.outDir);
+    },
+    closeBundle() {
+      const rig = join(outDir, 'example-rig.mvr');
+      const magic = existsSync(rig) ? readFileSync(rig).subarray(0, 2).toString('latin1') : '';
+      if (magic !== 'PK') {
+        throw new Error(
+          `${rig} is ${magic ? 'not a zip' : 'missing'}, so Load example rig would fail. ` +
+            'Run `python3 scripts/make-example-rig.py` and commit packages/app/public/example-rig.mvr.',
+        );
+      }
+    },
+  };
+}
+
 export default defineConfig(({ mode }) => ({
   // The About dialog shows the version the build actually produced. about-data.js
   // carries one baked at sync time as a fallback, and it goes stale the moment a
@@ -68,7 +102,7 @@ export default defineConfig(({ mode }) => ({
       process.env.TAURI_ENV_PLATFORM === 'ios' || process.env.TAURI_ENV_PLATFORM === 'android',
     ),
   },
-  plugins: [react(), supportFooter(mode)],
+  plugins: [react(), supportFooter(mode), requireExampleRig()],
   // Both targets serve from the root: the Cloudflare Worker has its own
   // hostname, and Tauri loads from a file-ish origin. A /repo/ base path would
   // break both.

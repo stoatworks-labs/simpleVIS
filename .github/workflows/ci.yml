@@ -38,6 +38,12 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      # The example rig is committed rather than generated in the build, so a
+      # change to the script that nobody re-ran would ship the old rig. The
+      # build below fails on its own if the file is missing from dist/.
+      - name: Example rig matches its script
+        run: python3 scripts/make-example-rig.py --check
+
       - name: Test
         run: npm test
 
